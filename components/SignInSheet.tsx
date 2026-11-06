@@ -65,7 +65,7 @@ export function SignInSheet() {
           <button className="btn btn-ghost w-full" onClick={wallet} disabled={!!busy}>
             {busy === "near" ? "Waiting for wallet…" : "Connect a NEAR testnet wallet"}
           </button>
-          <p className="text-sm text-mute">Sign a message with MyNearWallet or Meteor. Buy passes from your own testnet balance.</p>
+          <p className="text-sm text-mute">Sign a message with Meteor or Intear Wallet. Buy passes from your own testnet balance.</p>
           {error ? <p className="text-sm text-loss">{error}</p> : null}
         </div>
       </div>

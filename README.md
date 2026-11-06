@@ -22,7 +22,7 @@ Privue is private copy trading on NEAR. A trader's track record is public and ve
 | On `/me`, after 3 trades, click **Write a note** | NEAR AI Cloud writes a strategy note from your trade *statistics* (no symbols, prices or times are sent). It appears on your profile with its proof. |
 | `curl https://privue-app.vercel.app/api/traders/atlas/feed` | `403` unless you hold a view pass. |
 
-To use a real wallet instead, choose **Connect a NEAR testnet wallet** (MyNearWallet or Meteor). Sign-in is a NEP-413 signed message; passes are bought from your own testnet balance with `buy_pass`.
+To use a real wallet instead, choose **Connect a NEAR testnet wallet** (Meteor or Intear). Sign-in is a NEP-413 signed message; passes are bought from your own testnet balance with `buy_pass`.
 
 ## What's real and what isn't
 

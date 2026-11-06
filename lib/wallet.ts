@@ -13,13 +13,13 @@ function load() {
     (window as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
   }
   ready ??= (async () => {
-    const [{ setupWalletSelector }, { setupModal }, { setupMyNearWallet }, { setupMeteorWallet }] = await Promise.all([
+    const [{ setupWalletSelector }, { setupModal }, { setupMeteorWallet }, { setupIntearWallet }] = await Promise.all([
       import("@near-wallet-selector/core"),
       import("@near-wallet-selector/modal-ui"),
-      import("@near-wallet-selector/my-near-wallet"),
       import("@near-wallet-selector/meteor-wallet"),
+      import("@near-wallet-selector/intear-wallet"),
     ]);
-    const selector = await setupWalletSelector({ network: "testnet", modules: [setupMyNearWallet(), setupMeteorWallet()] });
+    const selector = await setupWalletSelector({ network: "testnet", modules: [setupMeteorWallet(), setupIntearWallet()] });
     const modal = setupModal(selector, { contractId: CONTRACT_ID, description: "Sign in to Privue with a NEAR testnet wallet." });
     return { selector, modal };
   })();
