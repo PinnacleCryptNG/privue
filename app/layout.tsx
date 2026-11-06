@@ -3,6 +3,7 @@ import { IBM_Plex_Sans } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { MeProvider } from "@/components/MeProvider";
+import { SignInSheet } from "@/components/SignInSheet";
 import "@near-wallet-selector/modal-ui/styles.css";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <SignInSheet />
         </MeProvider>
       </body>
     </html>

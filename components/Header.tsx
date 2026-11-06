@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Wordmark } from "./Logo";
 import { shortId, useMe } from "./MeProvider";
-import { SignInSheet } from "./SignInSheet";
 
 const NAV = [
   { href: "/traders", label: "Traders" },
@@ -50,7 +49,6 @@ export function Header() {
           Your passes
         </Link>
       </nav>
-      <SignInSheet />
     </header>
   );
 }
