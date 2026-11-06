@@ -71,6 +71,18 @@ export function decide(style: string, price: number, history: number[], held: bo
 
 export type TickLog = { handle: string; symbol: string; action: string; detail?: string };
 
+const MIN_TICK_GAP_MINUTES = 10;
+
+/** Atomically claims the next tick slot so any caller (GitHub Actions, Vercel cron, a visitor) runs bots at most every 10 min. */
+export async function claimTick(): Promise<boolean> {
+  const rows = await q<{ id: number }>(
+    `insert into ticks (ts) select now() where pg_try_advisory_xact_lock(4242)
+       and not exists (select 1 from ticks where ts > now() - make_interval(mins => $1)) returning id`,
+    [MIN_TICK_GAP_MINUTES],
+  );
+  return rows.length > 0;
+}
+
 export async function tick(): Promise<TickLog[]> {
   await ensureSeeded();
   const prices = await symbolPrices();

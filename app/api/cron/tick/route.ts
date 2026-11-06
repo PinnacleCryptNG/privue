@@ -1,11 +1,11 @@
-import { fail, json } from "@/lib/access";
-import { tick } from "@/lib/bots";
+import { json } from "@/lib/access";
+import { claimTick, tick } from "@/lib/bots";
 
 export const maxDuration = 300;
 
-async function handle(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return fail("unauthorized", 401);
+/** Public on purpose: the DB slot claim limits bot runs to one per 10 minutes no matter who calls. */
+async function handle() {
+  if (!(await claimTick())) return json({ skipped: "a tick ran in the last 10 minutes" });
   return json({ log: await tick() });
 }
 

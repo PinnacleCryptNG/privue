@@ -12,7 +12,5 @@ jobs:
     steps:
       - name: Run one bot tick
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PRIVUE_URL: ${{ vars.PRIVUE_URL || 'https://privue.vercel.app' }}
-        run: |
-          curl -fsS --max-time 300 -H "Authorization: Bearer $CRON_SECRET" "$PRIVUE_URL/api/cron/tick"
+          PRIVUE_URL: ${{ vars.PRIVUE_URL || 'https://privue-app.vercel.app' }}
+        run: curl -fsS --max-time 300 "$PRIVUE_URL/api/cron/tick"

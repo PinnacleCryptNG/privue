@@ -68,6 +68,10 @@ const SCHEMA = [
     proof jsonb not null,
     created_at timestamptz not null default now()
   )`,
+  `create table if not exists ticks (
+    id bigserial primary key,
+    ts timestamptz not null default now()
+  )`,
   `create table if not exists skipped_copies (
     id bigserial primary key,
     account text not null,
