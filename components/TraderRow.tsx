@@ -14,7 +14,7 @@ export function TraderRow({ t, curve }: { t: PublicTrader; curve?: { ts: string;
           <span className="text-sm text-faint">@{t.handle}</span>
         </div>
         <p className="mt-0.5 text-sm text-mute">
-          {t.style} · {t.markets.slice(0, 3).join(", ")} · last trade {ago(t.stats.lastFillAt)}
+          {t.style} · {t.markets.slice(0, 3).join(", ")} · {t.stats.lastFillAt ? `last trade ${ago(t.stats.lastFillAt)}` : "no trades yet"}
         </p>
       </div>
       <div className="flex items-center gap-5">

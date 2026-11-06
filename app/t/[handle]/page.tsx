@@ -66,7 +66,7 @@ export default function TraderPage() {
           </div>
           <p className="mt-2 max-w-xl text-mute">{t.bio}</p>
           <p className="label mt-2">
-            {t.style} · trades {t.markets.join(", ")} · last trade {ago(t.stats.lastFillAt)} · {t.copiers} copying
+            {t.style} · trades {t.markets.join(", ")} · {t.stats.lastFillAt ? `last trade ${ago(t.stats.lastFillAt)}` : "no trades yet"} · {t.copiers} copying
             {t.isBot ? " · demo strategy" : ""}
           </p>
         </div>
