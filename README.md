@@ -19,6 +19,7 @@ Privue is private copy trading on NEAR. A trader's track record is public and ve
 | Click **Get a free demo pass** on the **Copy pass** of another trader | That trader's feed stays locked (`copy passes are blind`), but **Your passes** (`/me`) now shows a copy account whose balance moves with their trades. |
 | On `/me`, open a trader profile and place a buy | A live NEAR Intents 1Click quote is fetched, its signature is verified, and the paper fill is stored. It's mirrored to anyone copying you. |
 | Click **Signed quote** on any fill, or open `/verify/<id>` | The 1Click quote hash and ed25519 signature, re-verified server-side. You see the proof, not the trade. |
+| On `/me`, after 3 trades, click **Write a note** | NEAR AI Cloud writes a strategy note from your trade *statistics* (no symbols, prices or times are sent). It appears on your profile with its proof. |
 | `curl https://privue-app.vercel.app/api/traders/atlas/feed` | `403` unless you hold a view pass. |
 
 To use a real wallet instead, choose **Connect a NEAR testnet wallet** (MyNearWallet or Meteor). Sign-in is a NEP-413 signed message; passes are bought from your own testnet balance with `buy_pass`.
@@ -43,6 +44,7 @@ trader order ──► 1Click dry quote (signed) ──► verify signature ─�
 
 - **Privacy.** Public endpoints return aggregates only. The equity curve is bucketed hourly so trade timing can't be read off it. `/api/traders/:handle/feed` checks for an active view pass, held in Neon and synced from the contract.
 - **Blind copy.** When a trader fills, each copy-pass holder's paper account places the same trade at the same share of equity. A risk check skips copies under $5 or ones that would put over 60% of the account in one asset.
+- **Strategy notes (NEAR AI Cloud).** Before every note, Privue fetches a fresh attestation report with its own nonce and verifies it fail-closed: Intel TDX quote via `dcap-qvl`, NVIDIA GPU evidence via NRAS, nonce echo and signer addresses (ported from CodeCloak's verifier). Only then does it send the model aggregate behaviour (trade count, hold time, sizing as % of equity, win rate). The model's ECDSA response signature is checked against the attested signer. Drafts that name an asset or a price are discarded. Bots get a fresh note weekly; traders can request one an hour.
 - **Contract** (`contracts/passes`, Rust, near-sdk): `set_offer`, `buy_pass` (payable), `has_pass`, `get_pass`, `get_offer`, `list_offers`. It emits a `pass_bought` NEP-297 event.
 
 ## Run it locally

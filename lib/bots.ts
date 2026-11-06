@@ -1,3 +1,4 @@
+import { dueNote, generateNote, notesEnabled } from "./notes";
 import { q } from "./db";
 import { accountFills, getTrader, snapshot, symbolPrices, trade, traderAccount, type TradeOrder, type Trader } from "./engine";
 import { equity, replay } from "./stats";
@@ -120,6 +121,17 @@ export async function tick(): Promise<TickLog[]> {
     if (!acted) await snapshot(account, trader.start_cash, prices);
   }
   await snapshotCopies(prices);
+  if (notesEnabled()) {
+    const handle = await dueNote(SEED_TRADERS.map((t) => t.handle));
+    if (handle) {
+      try {
+        const n = await generateNote(handle);
+        log.push({ handle, symbol: "-", action: "note", detail: `note ${n.id}, signature ${n.proof.signature.status}` });
+      } catch (e) {
+        log.push({ handle, symbol: "-", action: "note_error", detail: e instanceof Error ? e.message : String(e) });
+      }
+    }
+  }
   return log;
 }
 

@@ -15,7 +15,7 @@ type Detail = {
   trader: PublicTrader;
   curve: { ts: string; value: number }[];
   access: { owner: boolean; view: boolean; copy: boolean };
-  note: { body: string; model: string; created_at: string } | null;
+  note: { body: string; model: string; created_at: string; proof: { signature: { status: string; signingAddress: string | null }; attestation: { verifiedAt: string } } } | null;
   signedFills: number;
   latestFill: number | null;
 };
@@ -102,7 +102,11 @@ export default function TraderPage() {
           <section className="card p-5">
             <h2 className="font-medium">Strategy note</h2>
             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-mute">{d.note.body}</p>
-            <p className="label mt-3">Written by {d.note.model} on NEAR AI Cloud, inside a TEE · {ago(d.note.created_at)}</p>
+            <p className="label mt-3">
+              Written by {d.note.model} on NEAR AI Cloud from trade statistics only, never positions · TEE attestation verified
+              {d.note.proof.signature.status === "verified" ? " · response signed by the model enclave" : " · response signature unavailable"} ·{" "}
+              {ago(d.note.created_at)}
+            </p>
           </section>
         ) : null}
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CreateTrader } from "@/components/CreateTrader";
 import { shortId, useMe } from "@/components/MeProvider";
+import { NoteButton } from "@/components/NoteButton";
 import { TradeTicket } from "@/components/TradeTicket";
 import { pct, tone, usd } from "@/lib/format";
 
@@ -86,7 +87,10 @@ export default function MePage() {
           {handle ? <Link href={`/t/${handle}`} className="text-sm text-frost">Public profile</Link> : null}
         </div>
         {handle ? (
-          <div className="max-w-md"><TradeTicket handle={handle} onFilled={refresh} /></div>
+          <div className="grid items-start gap-4 md:grid-cols-2">
+            <TradeTicket handle={handle} onFilled={refresh} />
+            <NoteButton handle={handle} />
+          </div>
         ) : (
           <>
             <p className="max-w-xl text-sm text-mute">Open a trader profile to publish a track record and sell passes. Your trades stay private.</p>
