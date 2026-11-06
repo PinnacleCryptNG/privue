@@ -6,21 +6,38 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@defuse-protocol/one-click-sdk-typescript": "^0.1.26",
+    "@near-js/accounts": "^2.5.1",
+    "@near-js/crypto": "^2.5.1",
+    "@near-js/keystores": "^2.5.1",
+    "@near-js/providers": "^2.5.1",
+    "@near-js/signers": "^2.5.1",
+    "@near-js/transactions": "^2.5.1",
+    "@near-wallet-selector/core": "^10.1.4",
+    "@near-wallet-selector/meteor-wallet": "^10.1.4",
+    "@near-wallet-selector/modal-ui": "^10.1.4",
+    "@near-wallet-selector/my-near-wallet": "^10.1.4",
+    "@neondatabase/serverless": "^1.2.0",
+    "jose": "^6.2.15",
     "next": "16.4.5",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.1.0"
   }
 }
