@@ -1,69 +1,74 @@
-import Image from "next/image";
+import Link from "next/link";
+import { HeroLedger } from "@/components/HeroLedger";
+import { LiveBoard } from "@/components/LiveBoard";
+import { TryButton } from "@/components/TryButton";
+
+const POINTS = [
+  { h: "Your record, signed", p: "Return, win rate and drawdown are computed from fills priced by live NEAR Intents quotes. 1Click signs every quote, and anyone can check the signature." },
+  { h: "Your trades, private", p: "Followers see the numbers, not the positions. Only the people you sell a pass to see the trades, and you set how many passes exist." },
+  { h: "Copy without leaking", p: "Copy passes mirror your trades into each holder's account without showing them. Your signal can't be screenshotted or front-run." },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <>
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-16 pt-14 md:grid-cols-[1.1fr_1fr] md:pt-24">
+        <div className="fade-up">
+          <h1 className="text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.035em] sm:text-[3.4rem]">
+            Sell the view.
+            <br />
+            <span className="text-frost">Keep the trades.</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-mute">
+            Privue lets traders publish a verified track record while every trade stays private. Followers buy a limited pass to watch, or to copy
+            blind.
           </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <TryButton />
+            <Link href="/traders" className="btn btn-ghost">See the traders</Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="fade-up" style={{ animationDelay: "120ms" }}>
+          <HeroLedger />
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="border-y border-line bg-panel/50">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-3">
+          {POINTS.map((p) => (
+            <div key={p.h}>
+              <h2 className="font-semibold">{p.h}</h2>
+              <p className="mt-2 leading-relaxed text-mute">{p.p}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 py-16">
+        <div className="mb-6 flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl font-semibold tracking-[-0.02em]">Trading now</h2>
+          <Link href="/traders" className="text-sm text-frost">All traders</Link>
+        </div>
+        <LiveBoard />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5">
+        <div className="card grid gap-8 p-6 sm:p-10 md:grid-cols-[1.2fr_1fr] md:items-center">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-[-0.02em]">Built on NEAR</h2>
+            <p className="mt-3 leading-relaxed text-mute">
+              Prices come from NEAR Intents 1Click, which settles confidentially. Passes are minted by a NEAR contract that pays the trader on
+              every sale. Strategy notes are written by NEAR AI Cloud models running in TEEs.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-5 text-sm">
+            <div><dt className="label">Pricing</dt><dd className="mt-1">NEAR Intents 1Click</dd></div>
+            <div><dt className="label">Passes</dt><dd className="mt-1">privue-app.testnet</dd></div>
+            <div><dt className="label">Notes</dt><dd className="mt-1">NEAR AI Cloud, TEE</dd></div>
+            <div><dt className="label">Trader share</dt><dd className="mt-1">90% of each pass</dd></div>
+          </dl>
+        </div>
+      </section>
+    </>
   );
 }

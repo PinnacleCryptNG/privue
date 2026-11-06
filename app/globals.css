@@ -1,26 +1,124 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #0c0e13;
+  --color-panel: #13161d;
+  --color-raise: #1a1e27;
+  --color-line: #262b37;
+  --color-text: #e8ebf1;
+  --color-mute: #8b92a4;
+  --color-faint: #5d6476;
+  --color-frost: #b8c4ff;
+  --color-frost-deep: #6f7fe0;
+  --color-gain: #5fd49c;
+  --color-loss: #f07b7b;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 14px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-frost) 35%, transparent);
+}
+
+@layer components {
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  .card {
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.75rem;
+    padding: 0 1.15rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-frost);
+    color: #0c0e13;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #cdd5ff;
+  }
+  .btn-ghost {
+    border: 1px solid var(--color-line);
+    color: var(--color-text);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--color-faint);
+    background: var(--color-raise);
+  }
+  .field {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0 0.85rem;
+    border-radius: 10px;
+    background: var(--color-ink);
+    border: 1px solid var(--color-line);
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-frost-deep);
+  }
+  .label {
+    font-size: 0.8rem;
+    color: var(--color-mute);
+  }
+  .frosted {
+    filter: blur(6px);
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
+@keyframes sweep {
+  0%, 12% { transform: translateY(-110%); }
+  55%, 100% { transform: translateY(560%); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.fade-up {
+  animation: fade-up 0.5s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

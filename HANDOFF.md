@@ -31,3 +31,4 @@ Seeded demo traders trade on a schedule from GitHub Actions; Vercel Hobby only a
 
 ## Log
 - 2026-11-06 · scaffolded Next 16 app, testnet account, research doc.
+- 2026-11-06 · contract deployed+seeded (atlas/kestrel/juno offers); engine, blind copy, sponsor passes, NEP-413 sign-in all smoke-tested; prod https://privue-app.vercel.app (Vercel project `privue`, Neon `privue-db`, env SESSION_SECRET/CRON_SECRET/NEAR_SPONSOR_KEY); GitHub Actions `bots.yml` hits public slot-claimed `/api/cron/tick` every 15 min (GH secrets API is 403 for the integration, hence no secret). Front end v1 written (IBM Plex Sans, ink #0c0e13 + frost #b8c4ff, frosted-ledger motif). Pending: NEAR AI notes (needs NEARAI_API_KEY from user), README, OG image/icons, browser QA.
