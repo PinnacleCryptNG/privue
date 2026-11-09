@@ -7,8 +7,8 @@ import { lastRuns } from "@/lib/ops";
 
 export const dynamic = "force-dynamic";
 
-/** Max healthy age per worker; GitHub Actions calls them every 5–15 minutes. */
-const STALE_SEC: Record<string, number> = { prices: 1800, index: 1800, tick: 3600 };
+// GitHub throttles scheduled workflows to roughly every 1-4 hours, so allow for that cadence.
+const STALE_SEC: Record<string, number> = { prices: 6 * 3600, index: 6 * 3600, tick: 6 * 3600 };
 
 async function check<T>(fn: () => Promise<T>): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
   try {

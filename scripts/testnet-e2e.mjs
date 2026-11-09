@@ -19,6 +19,11 @@ const keyPair = KeyPair.fromString(cred.private_key);
 const account = new Account(accountId, new JsonRpcProvider({ url: RPC }), new KeyPairSigner(keyPair));
 
 let cookie = "";
+async function view(method, args = {}) {
+  const r = (await (await fetch(RPC, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic", account_id: CONTRACT, method_name: method, args_base64: Buffer.from(JSON.stringify(args)).toString("base64") } }) })).json()).result;
+  return JSON.parse(Buffer.from(r.result).toString("utf8"));
+}
+
 async function api(path, init = {}) {
   const r = await fetch(base + path, { ...init, headers: { "Content-Type": "application/json", cookie, ...(init.headers ?? {}) } });
   for (const c of r.headers.getSetCookie()) {
