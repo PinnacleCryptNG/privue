@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMe } from "./MeProvider";
 import { Mark } from "./Logo";
 
 export function SignInSheet() {
+  const router = useRouter();
   const { signInOpen, setSignInOpen, refresh } = useMe();
   const [busy, setBusy] = useState<"guest" | "near" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,11 +16,14 @@ export function SignInSheet() {
     setBusy("guest");
     setError(null);
     try {
-      await fetch("/api/auth/guest", { method: "POST" });
+      const r = await fetch("/api/auth/guest", { method: "POST" });
+      if (!r.ok) throw new Error((await r.json().catch(() => null))?.error ?? "");
       await refresh();
       setSignInOpen(false);
-    } catch {
-      setError("Couldn't start a demo session. Try again.");
+      if (window.location.pathname === "/") router.push("/traders");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      setError(m.startsWith("too many") ? `Too many new accounts from your network. ${m.replace("too many requests, ", "Please ")}.` : "Couldn't start a guest account. Try again.");
     } finally {
       setBusy(null);
     }
@@ -51,21 +56,20 @@ export function SignInSheet() {
       >
         <div className="mb-5 flex items-center gap-3">
           <Mark size={32} />
-          <h2 id="signin-title" className="text-xl font-bold tracking-[-0.02em]">Step behind the blinds</h2>
+          <h2 id="signin-title" className="text-xl font-bold tracking-[-0.02em]">Start using Privue</h2>
         </div>
         <div className="space-y-3">
           <button className="btn btn-primary w-full" onClick={guest} disabled={!!busy}>
             {busy === "guest" ? "Starting…" : "Continue as a guest"}
           </button>
           <p className="text-sm text-mute">
-            No wallet, no funds. Privue covers your first passes on NEAR testnet, so you can watch and copy traders straight away. Sign in with
-            a wallet later and they move with you.
+            Free, with no wallet or money. You can watch and copy traders straight away. Connect a wallet later and your passes come with you.
           </p>
           <div className="my-4 h-px bg-line" />
           <button className="btn btn-ghost w-full" onClick={wallet} disabled={!!busy}>
             {busy === "near" ? "Waiting for wallet…" : "Connect a NEAR testnet wallet"}
           </button>
-          <p className="text-sm text-mute">Sign one message with Meteor or Intear. Buy passes from your own testnet balance; 90% goes straight to the trader.</p>
+          <p className="text-sm text-mute">For NEAR testnet wallets (Meteor or Intear). Pay for passes with your own test tokens; 90% goes to the trader.</p>
           {error ? <p className="text-sm text-loss">{error}</p> : null}
         </div>
       </div>

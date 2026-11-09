@@ -21,6 +21,7 @@
 }
 
 html {
+  overflow-x: clip;
   background: var(--color-ink);
   scroll-behavior: smooth;
 }
@@ -178,6 +179,14 @@ body {
 [data-reveal].is-in {
   opacity: 1;
   transform: none;
+}
+
+.marquee-track {
+  animation: marquee 60s linear infinite;
+}
+.group:hover .marquee-track,
+.group:focus-within .marquee-track {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

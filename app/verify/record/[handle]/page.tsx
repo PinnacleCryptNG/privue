@@ -59,9 +59,9 @@ export default function RecordPage() {
           ) : null}
           <p className="mt-6 text-sm text-mute">
             Check it yourself: call <code className="text-text">commit_log</code> or <code className="text-text">get_commitment</code> on{" "}
-            <a className="text-amber" href="https://testnet.nearblocks.io/address/privue-app.testnet">privue-app.testnet</a>.{" "}
-            <Link className="text-amber" href={`/t/${handle}`}>Back to @{handle}</Link>
+            <a className="text-amber" href="https://testnet.nearblocks.io/address/privue-app.testnet">privue-app.testnet</a>.
           </p>
+          <Link className="btn btn-ghost mt-6 h-10 px-4 text-sm" href={`/t/${handle}`}>Back to @{handle}</Link>
         </>
       ) : null}
     </div>

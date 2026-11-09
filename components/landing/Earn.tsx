@@ -16,7 +16,7 @@ export function Earn() {
       <div className="md:min-w-[15rem] md:text-right">
         <div className="label">You keep, every 30 days</div>
         <div className="num display mt-2 text-5xl text-amber">{keep.toLocaleString("en-US", { maximumFractionDigits: 1 })}</div>
-        <div className="mt-1 text-sm text-mute">NEAR, paid to your wallet on-chain</div>
+        <div className="mt-1 text-sm text-mute">NEAR, paid straight to your wallet</div>
       </div>
     </div>
   );

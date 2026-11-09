@@ -5,7 +5,7 @@ export function StatGrid({ s }: { s: PublicStats }) {
   const items = [
     { k: "Return", v: pct(s.pnlPct), c: tone(s.pnl) },
     { k: "P&L", v: signedUsd(s.pnl), c: tone(s.pnl) },
-    { k: "Win rate", v: s.winRate == null ? "–" : pct(s.winRate, 0, false), c: "" },
+    { k: "Win rate", v: s.winRate == null ? "No closed trades" : pct(s.winRate, 0, false), c: "" },
     { k: "Max drawdown", v: pct(-s.maxDrawdown), c: s.maxDrawdown > 0 ? "text-loss" : "text-mute" },
     { k: "Closed trades", v: String(s.closedTrades), c: "" },
     { k: "Equity", v: usd(s.equity, 0), c: "" },

@@ -31,8 +31,9 @@ export function Header() {
   const active = (href: string) => !href.includes("#") && path.startsWith(href);
   const account = me?.session ? (
     <Link href="/me" className="btn btn-ghost h-10 px-3.5 text-sm">
-      <span className="text-mute">{me.session.kind === "guest" ? "Demo" : "Wallet"}</span>
-      <span className="num">{shortId(me.session.sub)}</span>
+      <span aria-hidden className={`h-2 w-2 rounded-full ${me.session.kind === "guest" ? "bg-amber" : "bg-gain"}`} />
+      <span className="hidden sm:inline">Your desk</span>
+      <span className="num text-mute sm:hidden">{shortId(me.session.sub)}</span>
     </Link>
   ) : (
     <button className="btn btn-primary h-10 px-4 text-sm" onClick={() => setSignInOpen(true)}>

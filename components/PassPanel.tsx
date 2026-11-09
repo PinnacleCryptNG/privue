@@ -7,9 +7,9 @@ import { IconCopy, IconDelayed, IconView } from "./Icons";
 import { useMe } from "./MeProvider";
 
 const COPY = {
-  view: { Icon: IconView, title: "View pass", body: "See every trade the moment it fills, with its signed quote." },
-  delayed: { Icon: IconDelayed, title: "Delayed view", body: "The same trade feed, 24 hours late. Learn the strategy for a fraction of the live price." },
-  copy: { Icon: IconCopy, title: "Copy pass", body: "Your paper account mirrors each trade at your size. You never see the trades, so the signal can't leak." },
+  view: { Icon: IconView, title: "View pass", body: "See every trade the moment it happens." },
+  delayed: { Icon: IconDelayed, title: "Delayed view", body: "See every trade 24 hours after it happens." },
+  copy: { Icon: IconCopy, title: "Copy pass", body: "Their trades are copied into your practice account at your size. You see your results, not the trades." },
 };
 
 export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; owner: boolean; held: { view: boolean; delayed: boolean; copy: boolean }; onBought: () => void }) {
@@ -24,7 +24,7 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
       const r = await fetch("/api/passes/sponsor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle: o.handle, tier: o.tier }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
-      setMsg({ tier: o.tier, text: "Pass minted on NEAR testnet.", link: d.explorer });
+      setMsg({ tier: o.tier, text: o.tier === "copy" ? "Done. Your copy account is on your desk." : "Done. The trades are now visible on this page.", link: d.explorer });
       await refresh();
       onBought();
     } catch (e) {
@@ -67,11 +67,18 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
                 <Icon size={20} className="text-amber" />
                 {COPY[tier].title}
               </h3>
-              <span className="num font-semibold">{near(o.price)}</span>
+              {me?.session?.kind === "near" ? (
+                <span className="num font-semibold">{near(o.price)}</span>
+              ) : (
+                <span className="text-right">
+                  <span className="num mr-2 text-sm text-faint line-through">{near(o.price)}</span>
+                  <span className="font-semibold text-amber">Free</span>
+                </span>
+              )}
             </div>
             <p className="mt-1 text-sm text-mute">{COPY[tier].body}</p>
             <p className="label mt-2">
-              {left} of {o.supply} left · {o.period_days} days · paid to the trader on-chain
+              {left} of {o.supply} left · lasts {o.period_days} days
             </p>
             <div className="mt-3">
               {owner ? (
@@ -79,23 +86,23 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
               ) : held[tier] ? (
                 <p className="text-sm text-amber">You hold this pass.</p>
               ) : !me?.session ? (
-                <button className="btn btn-primary w-full" onClick={() => setSignInOpen(true)}>Sign in to get it</button>
+                <button className="btn btn-primary w-full" onClick={() => setSignInOpen(true)}>Get it free</button>
               ) : left <= 0 ? (
                 <p className="text-sm text-mute">Sold out.</p>
               ) : me.session.kind === "near" ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button className="btn btn-primary" disabled={!!busy} onClick={() => wallet(o)}>{busy === tier ? "Confirm in wallet…" : `Buy for ${near(o.price)}`}</button>
-                  <button className="btn btn-ghost" disabled={!!busy} onClick={() => sponsor(o)}>Use a free demo pass</button>
+                  <button className="btn btn-ghost" disabled={!!busy} onClick={() => sponsor(o)}>Get it free</button>
                 </div>
               ) : (
                 <button className="btn btn-primary w-full" disabled={!!busy} onClick={() => sponsor(o)}>
-                  {busy === tier ? "Minting on testnet…" : "Get a free demo pass"}
+                  {busy === tier ? "Getting your pass…" : "Get it free"}
                 </button>
               )}
             </div>
             {msg?.tier === tier ? (
               <p className={`mt-2 text-sm ${msg.bad ? "text-loss" : "text-gain"}`}>
-                {msg.text} {msg.link ? <a className="underline" href={msg.link} target="_blank" rel="noreferrer">View transaction</a> : null}
+                {msg.text} {msg.link ? <a className="underline" href={msg.link} target="_blank" rel="noreferrer">See it on NEAR</a> : null}
               </p>
             ) : null}
           </div>

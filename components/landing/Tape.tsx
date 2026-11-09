@@ -17,7 +17,7 @@ export function Tape() {
           <Link key={i} href={`/t/${t.handle}`} className="flex items-center gap-3 whitespace-nowrap px-7 text-sm hover:text-amber">
             <span className="font-semibold">{t.name}</span>
             <span className={`num font-semibold ${tone(t.stats.pnl)}`}>{pct(t.stats.pnlPct)}</span>
-            <span className="num text-mute">{t.stats.totalFills} fills</span>
+            <span className="num text-mute">{t.stats.totalFills} {t.stats.totalFills === 1 ? "trade" : "trades"}</span>
             {view ? <span className="num text-faint">view {near(view.price)}</span> : null}
             <span className="ml-4 h-3 w-px bg-line" />
           </Link>
@@ -27,7 +27,7 @@ export function Tape() {
   );
   return (
     <div className="group relative overflow-hidden border-y border-line bg-panel/60 py-4 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-      <div className="marquee-track flex w-max group-hover:[animation-play-state:paused]" style={{ animation: "marquee 60s linear infinite" }}>
+      <div className="marquee-track flex w-max">
         {track}
         {track}
       </div>

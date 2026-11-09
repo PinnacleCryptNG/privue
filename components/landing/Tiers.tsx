@@ -6,10 +6,10 @@ import type { Tier } from "@/lib/near";
 import { useTraders } from "./useTraders";
 
 const TIERS: { tier: Tier | "public"; name: string; sees: string; body: string; Icon: typeof IconRecord }[] = [
-  { tier: "public", name: "Public record", sees: "The numbers", body: "Return, win rate, drawdown and an hourly equity curve, computed from sealed fills. Free for everyone.", Icon: IconRecord },
-  { tier: "delayed", name: "Delayed view", sees: "Every trade, 24 hours late", body: "Study how a trader works without paying for the live edge.", Icon: IconDelayed },
-  { tier: "view", name: "View pass", sees: "Every trade, as it fills", body: "Side, market, size and price the moment each fill lands, each with its signed quote.", Icon: IconView },
-  { tier: "copy", name: "Copy pass", sees: "Nothing, by design", body: "Your account mirrors each trade at your size and you never see it, so the signal can't leak.", Icon: IconCopy },
+  { tier: "public", name: "Public record", sees: "The numbers", body: "Return, win rate, worst dip and a chart of the account over time. Free for everyone.", Icon: IconRecord },
+  { tier: "delayed", name: "Delayed view", sees: "Every trade, 24 hours late", body: "See every trade a day after it happens. Cheaper, good for learning how someone trades.", Icon: IconDelayed },
+  { tier: "view", name: "View pass", sees: "Every trade, as it happens", body: "What they bought or sold, how much and at what price, the moment they trade.", Icon: IconView },
+  { tier: "copy", name: "Copy pass", sees: "Their trades, placed for you", body: "Each trade is copied into your account at your size. You see your results, not the trades, so nobody can leak them.", Icon: IconCopy },
 ];
 
 export function Tiers() {

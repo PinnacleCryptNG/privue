@@ -8,30 +8,30 @@ export type FeedFill = { id: number; side: "buy" | "sell"; symbol: string; qty: 
 export function LockedLedger({ count, latest }: { count: number; latest: number | null }) {
   const slats = Math.min(Math.max(count, 4), 8);
   return (
-    <div className="overflow-hidden rounded-[12px] border border-line">
+    <div className="relative overflow-hidden rounded-[12px] border border-line">
       <Blinds
         count={slats}
         slat={46}
-        rows={Array.from({ length: slats }, (_, i) => (
-          <span key={i} className="num text-xs text-faint">{i < count ? `sealed fill ${String(count - i).padStart(3, "0")}` : ""}</span>
-        ))}
-        behind={
-          <div className="text-ink">
-            <p className="text-xl font-extrabold tracking-[-0.03em]">{count} private {count === 1 ? "fill" : "fills"}</p>
-            <p className="text-sm font-medium">Open with a view pass.</p>
-          </div>
-        }
+        still
       />
+      <div className="absolute inset-x-0 top-0 flex items-center justify-center" style={{ height: slats * 46 }}>
+        <div className="rounded-[10px] border border-line bg-ink/95 px-5 py-3 text-center shadow-xl">
+          <p className="font-bold tracking-[-0.02em]">
+            {count} {count === 1 ? "trade" : "trades"} hidden
+          </p>
+          <p className="text-sm text-mute">Get a View pass to see them.</p>
+        </div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-panel px-4 py-3 text-sm">
-        <span className="text-mute">Hidden until you hold a view pass. Each fill carries a signed 1Click quote.</span>
-        {latest ? <Link href={`/verify/${latest}`} className="link font-medium">Check the latest signature</Link> : null}
+        <span className="text-mute">Each trade is priced by a signed NEAR Intents quote.</span>
+        {latest ? <Link href={`/verify/${latest}`} className="link font-medium">Check a signature</Link> : null}
       </div>
     </div>
   );
 }
 
 export function OpenLedger({ fills }: { fills: FeedFill[] }) {
-  if (!fills.length) return <p className="card px-4 py-6 text-sm text-mute">No fills yet. New trades show up here the moment they fill.</p>;
+  if (!fills.length) return <p className="card px-4 py-6 text-sm text-mute">No trades yet. New trades show up here the moment they happen.</p>;
   return (
     <div className="card divide-y divide-line">
       {fills.map((f) => (

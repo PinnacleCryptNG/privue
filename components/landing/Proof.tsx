@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconChain, IconEnclave, IconSigned } from "@/components/Icons";
 import { ago } from "@/lib/format";
-import { useRecord, useTraders } from "./useTraders";
+import { useTraders } from "./useTraders";
 
 type Detail = { latestFill: number | null; signedFills: number; note: { model: string; created_at: string } | null };
 
@@ -12,7 +12,6 @@ type Detail = { latestFill: number | null; signedFills: number; note: { model: s
 export function Proof() {
   const list = useTraders();
   const top = list?.[0];
-  const rec = useRecord(top?.handle);
   const [d, setD] = useState<Detail | null>(null);
   const [noted, setNoted] = useState<{ handle: string; model: string; at: string } | null>(null);
   useEffect(() => {
@@ -29,21 +28,21 @@ export function Proof() {
   const items = [
     {
       Icon: IconSigned,
-      h: "Every price is signed",
-      p: "Each fill is priced from a live NEAR Intents 1Click quote, and the quote's ed25519 signature is stored with it. Anyone can re-check it without seeing the trade.",
-      cta: d?.latestFill ? { href: `/verify/${d.latestFill}`, label: `Check fill #${d.latestFill}` } : null,
+      h: "Real prices, signed",
+      p: "Every trade is priced from a live NEAR Intents quote that comes with a digital signature. Anyone can check the signature without seeing the trade.",
+      cta: d?.latestFill ? { href: `/verify/${d.latestFill}`, label: "Check a signed trade" } : null,
     },
     {
       Icon: IconChain,
-      h: "The record can't be trimmed",
-      p: "Fills are sealed with AES-256-GCM and linked in a SHA-256 chain. The chain's head is written to the passes contract on NEAR, which only accepts a longer chain. Drop a losing trade and every later hash breaks.",
-      cta: top ? { href: `/verify/record/${top.handle}`, label: rec ? `@${top.handle}: ${rec.fills} fills, ${rec.checkpoints.length} on-chain ${rec.checkpoints.length === 1 ? "checkpoint" : "checkpoints"}` : `Check @${top.handle}'s record` } : null,
+      h: "No hiding losing trades",
+      p: "Each trade is encrypted and linked to the one before it, and a fingerprint of the whole list is saved on NEAR. If a trade were removed, the fingerprint would stop matching.",
+      cta: top ? { href: `/verify/record/${top.handle}`, label: `Check ${top.name}'s record` } : null,
     },
     {
       Icon: IconEnclave,
-      h: "Notes from a sealed model",
-      p: "Strategy notes are written by NEAR AI Cloud models inside a TEE, from aggregate statistics only. Privue verifies the enclave first, and a second model rejects any draft that hints at a position.",
-      cta: noted ? { href: `/t/${noted.handle}`, label: `Latest note: @${noted.handle}, ${ago(noted.at)}` } : null,
+      h: "AI notes that can't leak",
+      p: "Strategy summaries are written by NEAR AI inside sealed hardware, from overall statistics only. A second model rejects any summary that hints at a specific trade.",
+      cta: noted ? { href: `/t/${noted.handle}`, label: `Read the latest note (${ago(noted.at)})` } : null,
     },
   ];
   return (

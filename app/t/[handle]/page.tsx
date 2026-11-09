@@ -69,14 +69,14 @@ export default function TraderPage() {
           <p className="mt-3 max-w-xl text-lg text-mute">{t.bio}</p>
           <p className="label mt-2">
             {t.style} · trades {t.markets.join(", ")} · {t.stats.lastFillAt ? `last trade ${ago(t.stats.lastFillAt)}` : "no trades yet"} · {t.copiers} copying
-            {t.isBot ? " · demo strategy" : ""}
+            {t.isBot ? " · automated demo trader" : ""}
           </p>
         </div>
 
         <div className="card p-4 sm:p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="font-bold tracking-[-0.015em]">Equity</h2>
-            <span className="label">hourly, from $10,000 paper</span>
+            <span className="label">started with $10,000 practice money</span>
           </div>
           <EquityChart points={d.curve} start={t.stats.startCash} />
         </div>
@@ -87,20 +87,20 @@ export default function TraderPage() {
           <div className="flex items-baseline justify-between">
             <h2 className="font-bold tracking-[-0.015em]">Trades</h2>
             <span className="label">
-              {d.signedFills} signed fills · <Link href={`/verify/record/${t.handle}`} className="text-amber">check the record on-chain</Link>
+              <Link href={`/verify/record/${t.handle}`} className="text-amber">Check this record on NEAR</Link>
             </span>
           </div>
           {d.access.view && feed ? (
             <OpenLedger fills={feed} />
           ) : d.access.delayed && feed ? (
             <>
-              <p className="text-sm text-mute">Delayed view: trades appear 24 hours after they fill.{hidden ? ` ${hidden} newer ${hidden === 1 ? "trade is" : "trades are"} still under the delay.` : ""}</p>
+              <p className="text-sm text-mute">Delayed view: trades appear 24 hours after they happen.{hidden ? ` ${hidden} newer ${hidden === 1 ? "trade is" : "trades are"} still under the delay.` : ""}</p>
               <OpenLedger fills={feed} />
             </>
           ) : d.access.copy ? (
             <p className="card px-4 py-5 text-sm text-mute">
-              You&apos;re copying {t.name}. Copy passes are blind: your account mirrors each trade, but the trades stay hidden.{" "}
-              <Link href="/me" className="text-amber">See your copy account</Link>
+              You&apos;re copying {t.name}. Their trades are placed in your practice account automatically, but stay hidden from you.{" "}
+              <Link href="/me" className="text-amber">See your results</Link>
             </p>
           ) : (
             <LockedLedger count={d.signedFills} latest={d.latestFill} />
@@ -121,9 +121,9 @@ export default function TraderPage() {
       </div>
 
       <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-        <h2 className="font-bold tracking-[-0.015em]">Passes</h2>
+        <div><h2 className="font-bold tracking-[-0.015em]">Follow {t.name}</h2><p className="mt-1 text-sm text-mute">Free while Privue runs on NEAR testnet.</p></div>
         <PassPanel offers={t.offers} owner={d.access.owner} held={{ view: d.access.view && !d.access.owner, delayed: d.access.delayed, copy: d.access.copy }} onBought={load} />
-        <p className="px-1 text-xs text-faint">Passes are minted by the Privue contract on NEAR testnet. Trades are paper fills at live NEAR Intents quotes.</p>
+        <p className="px-1 text-xs text-faint">Passes are recorded on NEAR testnet. Trades use practice money at real NEAR Intents prices; no real money moves.</p>
       </aside>
     </div>
   );

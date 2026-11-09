@@ -24,7 +24,7 @@ export const viewport: Viewport = { themeColor: "#0e0d0b" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${schibsted.variable} h-full`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${schibsted.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <MeProvider>
           <Header />

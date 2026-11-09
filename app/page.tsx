@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Blinds } from "@/components/Blinds";
 import { IconArrow, IconCopy, IconPayout, IconRecord } from "@/components/Icons";
 import { Earn } from "@/components/landing/Earn";
-import { HeroWindow } from "@/components/landing/HeroWindow";
+import { PassPreview } from "@/components/landing/PassPreview";
 import { Proof } from "@/components/landing/Proof";
 import { Tape } from "@/components/landing/Tape";
 import { Tiers } from "@/components/landing/Tiers";
@@ -11,9 +11,9 @@ import { RevealOnScroll } from "@/components/Reveal";
 import { TryButton } from "@/components/TryButton";
 
 const TRADER_POINTS = [
-  { Icon: IconPayout, h: "90% of every pass", p: "The passes contract pays you at the moment of sale. Privue keeps 10%." },
-  { Icon: IconRecord, h: "You set the scarcity", p: "Pick the price and how many passes exist. Fewer holders, less crowding on your entries." },
-  { Icon: IconCopy, h: "Copiers can't leak you", p: "Copy holders mirror your trades without seeing them, so there is nothing to screenshot or front-run." },
+  { Icon: IconPayout, h: "Keep 90% of every pass", p: "You are paid the moment someone buys. Privue keeps 10%." },
+  { Icon: IconRecord, h: "You set the price and the limit", p: "Choose what a pass costs and how many exist. Fewer followers means less crowding on your trades." },
+  { Icon: IconCopy, h: "Copiers can't leak your trades", p: "People who copy you never see your trades, so there is nothing to screenshot or trade ahead of." },
 ];
 
 export default function Home() {
@@ -28,8 +28,8 @@ export default function Home() {
             <span className="text-amber">Sell the view.</span>
           </h1>
           <p className="mt-7 max-w-[34rem] text-lg leading-relaxed text-mute">
-            Privue is copy trading with the blinds down. Traders publish a track record anchored on NEAR and keep every position private. Followers
-            buy a limited pass to watch the trades live, a day late, or copy them blind.
+            Traders show their results in public and keep their trades private. You pick a trader by their record, then buy a pass to watch
+            their trades or to copy them automatically.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <TryButton />
@@ -37,10 +37,10 @@ export default function Home() {
               Browse traders <IconArrow />
             </Link>
           </div>
-          <p className="label mt-5">Testnet passes, paper fills at live NEAR Intents prices. No wallet or funds needed.</p>
+          <p className="label mt-5">Free to try. Runs on NEAR testnet with practice money at real market prices.</p>
         </div>
         <div className="fade-up" style={{ animationDelay: "140ms" }}>
-          <HeroWindow />
+          <PassPreview />
         </div>
       </section>
 
@@ -48,8 +48,8 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-5 pt-28">
         <div className="max-w-2xl" data-reveal>
-          <h2 className="display text-4xl sm:text-5xl">Four ways to look at a trader.</h2>
-          <p className="mt-4 text-lg leading-relaxed text-mute">Everyone sees the record. What you see behind it depends on the pass you hold.</p>
+          <h2 className="display text-4xl sm:text-5xl">Four ways to follow a trader.</h2>
+          <p className="mt-4 text-lg leading-relaxed text-mute">Anyone can see a trader&apos;s results. A pass shows you more, or copies their trades for you.</p>
         </div>
         <div className="mt-12">
           <Tiers />
@@ -59,7 +59,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-5 pt-28">
         <div className="mb-12 max-w-2xl" data-reveal>
           <h2 className="display text-4xl sm:text-5xl">Don&apos;t take the record on trust.</h2>
-          <p className="mt-4 text-lg leading-relaxed text-mute">A private trader is only worth following if the public numbers are real. Each claim below links to its proof.</p>
+          <p className="mt-4 text-lg leading-relaxed text-mute">Results only matter if they&apos;re real. Here is how Privue keeps them honest, with a live link to check each one.</p>
         </div>
         <Proof />
       </section>
@@ -67,7 +67,7 @@ export default function Home() {
       <section id="earn" className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-28">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-center">
           <div data-reveal>
-            <h2 className="display text-4xl sm:text-5xl">Get paid to be followed, not copied for free.</h2>
+            <h2 className="display text-4xl sm:text-5xl">Trade well? Get paid for it.</h2>
             <ul className="mt-9 space-y-6">
               {TRADER_POINTS.map((t) => (
                 <li key={t.h} className="flex gap-4">
@@ -102,8 +102,8 @@ export default function Home() {
         <div className="card relative overflow-hidden" data-reveal>
           <Blinds count={7} slat={52} offsetMs={900} className="absolute inset-0 opacity-90" />
           <div className="relative grid gap-6 bg-gradient-to-r from-ink via-ink/85 to-transparent p-8 sm:p-14">
-            <h2 className="display max-w-xl text-4xl sm:text-5xl">Pick a trader. Pull the cord.</h2>
-            <p className="max-w-md text-lg leading-relaxed text-mute">Start as a guest. Your first passes are on Privue, minted on NEAR testnet in a few seconds.</p>
+            <h2 className="display max-w-xl text-4xl sm:text-5xl">Try it in under a minute.</h2>
+            <p className="max-w-md text-lg leading-relaxed text-mute">Start a free guest account, open a trader and take a free pass. No wallet, no money, nothing to install.</p>
             <div>
               <TryButton label="Start free" />
             </div>
