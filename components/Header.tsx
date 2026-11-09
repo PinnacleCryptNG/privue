@@ -65,7 +65,7 @@ export function Header() {
       {menu ? (
         <nav className="border-t border-line px-5 pb-5 pt-2 md:hidden">
           {[...NAV, { href: "/me", label: "Your desk" }].map((n) => (
-            <Link key={n.href} href={n.href} className={`flex items-center justify-between border-b border-line py-3.5 text-lg font-semibold tracking-[-0.02em] ${active(n.href) ? "text-amber" : ""}`}>
+            <Link key={n.href} href={n.href} onClick={() => setMenu(false)} className={`flex items-center justify-between border-b border-line py-3.5 text-lg font-semibold tracking-[-0.02em] ${active(n.href) ? "text-amber" : ""}`}>
               {n.label}
             </Link>
           ))}

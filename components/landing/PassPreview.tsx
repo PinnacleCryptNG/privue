@@ -48,10 +48,10 @@ export function PassPreview() {
                 setTab(x.id);
                 setAuto(false);
               }}
-              className={`relative flex items-center justify-center gap-2 px-2 py-3.5 text-sm font-semibold transition-colors ${tab === x.id ? "text-text" : "text-faint hover:text-mute"}`}
+              className={`relative flex items-center justify-center gap-2 px-1.5 py-3.5 text-[0.82rem] font-semibold sm:px-2 sm:text-sm transition-colors ${tab === x.id ? "text-text" : "text-faint hover:text-mute"}`}
             >
-              <x.Icon size={17} className={tab === x.id ? "text-amber" : ""} />
-              <span className="truncate">{x.label}</span>
+              <x.Icon size={17} className={`hidden shrink-0 min-[400px]:block ${tab === x.id ? "text-amber" : ""}`} />
+              <span className="whitespace-nowrap">{x.label}</span>
               {tab === x.id ? <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-sm bg-amber" /> : null}
             </button>
           ))}
