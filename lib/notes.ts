@@ -93,11 +93,36 @@ const SYSTEM = `You write the strategy note on a trader's profile in a private c
 You get the trader's style label and behaviour statistics. In 3 or 4 plain sentences, describe how they trade: cadence, sizing, holding time, how they handle losers, and what kind of follower suits them.
 Never name or hint at any asset, token, ticker, chain, sector or price level, even if you could guess it. Don't give advice or predictions. No lists, headings or markdown.`;
 
+/** A different NEAR AI model reviews every draft before it is stored. Fails closed. */
+export const REVIEW_MODEL = process.env.NEARAI_REVIEW_MODEL?.trim() || "Qwen/Qwen3.6-35B-A3B-FP8";
+
+const REVIEW = `You check a short note before it is published on a private trading profile. The note must not reveal what the trader holds or trades.
+Reply with only JSON: {"leak": true|false, "reason": "<short>"}.
+leak is true if the note names or hints at any asset, token, coin, ticker, blockchain, sector, exchange, price level, specific date or time, or a specific trade. Generic behaviour (cadence, sizing, holding time, risk handling) is fine.`;
+
+export type Review = { model: string; leak: boolean; reason: string };
+
+export async function reviewNote(body: string, chat: typeof chatCompletion = chatCompletion): Promise<Review> {
+  const c = await chat(REVIEW_MODEL, [
+    { role: "system", content: REVIEW },
+    { role: "user", content: body },
+  ], 120);
+  const m = c.content.replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
+  try {
+    const r = JSON.parse(m?.[0] ?? "") as { leak?: unknown; reason?: unknown };
+    if (typeof r.leak !== "boolean") throw new Error("no verdict");
+    return { model: REVIEW_MODEL, leak: r.leak, reason: String(r.reason ?? "").slice(0, 200) };
+  } catch {
+    return { model: REVIEW_MODEL, leak: true, reason: "reviewer gave no clear verdict" };
+  }
+}
+
 export type NoteProof = {
   chatId: string;
   attestation: { verifiedAt: string; nonce: string; gatewaySigner: string; modelSigners: string[]; tcb: string[]; gpu: string[] };
   signature: SignatureVerification;
   inputs: Behaviour;
+  review?: Review;
 };
 
 export async function generateNote(handle: string) {
@@ -116,6 +141,8 @@ export async function generateNote(handle: string) {
     const c = await chatCompletion(model, messages, 400);
     const body = cleanNote(c.content);
     if (body.length < 40 || findLeaks(body).length) continue;
+    const review = await reviewNote(body);
+    if (review.leak) continue;
     const signature = verifySignature(await fetchSignature(c.chatId, model), c, model, attestation);
     const proof: NoteProof = {
       chatId: c.chatId,
@@ -129,6 +156,7 @@ export async function generateNote(handle: string) {
       },
       signature,
       inputs,
+      review,
     };
     const [row] = await q<{ id: number }>("insert into notes (handle, body, model, proof) values ($1, $2, $3, $4) returning id", [
       handle,

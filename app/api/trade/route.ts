@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { fail, json } from "@/lib/access";
 import { getTrader, trade } from "@/lib/engine";
+import { limit } from "@/lib/ratelimit";
 import { getSession } from "@/lib/session";
+import { kick } from "@/lib/worker";
 
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 const Body = z.discriminatedUnion("side", [
   z.object({ handle: z.string(), side: z.literal("buy"), symbol: z.string(), usdc: z.number().min(5).max(1_000_000) }),
@@ -13,6 +15,8 @@ const Body = z.discriminatedUnion("side", [
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return fail("sign in first", 401);
+  const limited = await limit([{ name: "trade", max: 20, windowSec: 60, by: session.sub }]);
+  if (limited) return limited;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail("invalid order");
   const trader = await getTrader(parsed.data.handle);
@@ -20,7 +24,8 @@ export async function POST(req: Request) {
   try {
     const d = parsed.data;
     const r = await trade(trader, d.side === "buy" ? { side: "buy", symbol: d.symbol, usdc: d.usdc } : { side: "sell", symbol: d.symbol, fraction: d.fraction });
-    return json({ fillId: r.fillId, side: r.fill.side, symbol: r.fill.asset.symbol, qty: r.fill.qty, usdc: r.fill.usdc, price: r.fill.price, mirrored: r.mirrored, skipped: r.skipped });
+    if (r.queued) kick();
+    return json({ fillId: r.fillId, side: r.fill.side, symbol: r.fill.asset.symbol, qty: r.fill.qty, usdc: r.fill.usdc, price: r.fill.price, queued: r.queued });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "trade failed", 422);
   }

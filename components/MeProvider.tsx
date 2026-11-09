@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { PublicStats } from "@/lib/stats";
 
-export type MePass = { handle: string; tier: "view" | "copy"; expires_at: string; allocation: number; tx: string | null };
+export type MePass = { handle: string; tier: "view" | "delayed" | "copy"; expires_at: string; allocation: number; tx: string | null };
 export type Me = {
   session: { sub: string; kind: "near" | "guest" } | null;
   passes: MePass[];

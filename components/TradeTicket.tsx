@@ -5,7 +5,7 @@ import { useState } from "react";
 import { MARKETS } from "@/lib/assets";
 import { usd } from "@/lib/format";
 
-type Result = { fillId: number; side: string; symbol: string; qty: number; usdc: number; price: number; mirrored: number; skipped: number };
+type Result = { fillId: number; side: string; symbol: string; qty: number; usdc: number; price: number; queued: number };
 
 export function TradeTicket({ handle, onFilled }: { handle: string; onFilled?: () => void }) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
@@ -82,8 +82,8 @@ export function TradeTicket({ handle, onFilled }: { handle: string; onFilled?: (
         <p className="text-sm text-mute">
           <span className={res.side === "buy" ? "text-gain" : "text-loss"}>{res.side === "buy" ? "Bought" : "Sold"}</span>{" "}
           <span className="num text-text">{res.qty.toPrecision(5)} {res.symbol}</span> at <span className="num text-text">{usd(res.price, res.price < 10 ? 4 : 2)}</span>{" "}
-          for <span className="num text-text">{usd(res.usdc)}</span>. Mirrored to {res.mirrored} {res.mirrored === 1 ? "copier" : "copiers"}
-          {res.skipped ? `, ${res.skipped} skipped by the risk check` : ""}.{" "}
+          for <span className="num text-text">{usd(res.usdc)}</span>.{" "}
+          {res.queued ? `Mirroring to ${res.queued} ${res.queued === 1 ? "copier" : "copiers"} in the background.` : "No copiers yet."}{" "}
           <Link href={`/verify/${res.fillId}`} className="text-frost">Signed quote</Link>
         </p>
       ) : null}

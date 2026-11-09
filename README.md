@@ -57,13 +57,37 @@ trader order ──► 1Click dry quote (signed) ──► verify signature ─�
 - **Strategy notes (NEAR AI Cloud).** Before every note, Privue fetches a fresh attestation report with its own nonce and verifies it fail-closed: Intel TDX quote via `dcap-qvl`, NVIDIA GPU evidence via NRAS, nonce echo and signer addresses (ported from CodeCloak's verifier). Only then does it send the model aggregate behaviour (trade count, hold time, sizing as % of equity, win rate). The model's ECDSA response signature is checked against the attested signer. Drafts that name an asset or a price are discarded. Bots get a fresh note weekly; traders can request one an hour.
 - **Contract** (`contracts/passes`, Rust, near-sdk): `set_offer`, `buy_pass` (payable), `has_pass`, `get_pass`, `get_offer`, `list_offers`. It emits a `pass_bought` NEP-297 event.
 
+## Production architecture (on NEAR testnet)
+
+| Concern | How Privue handles it |
+| --- | --- |
+| Private fills | Sealed with AES-256-GCM (`lib/ledger.ts`) before they reach Postgres, bound to their row, with key rotation (`FILL_KEY`, `FILL_KEYS_OLD`). Only counts, hashes and timestamps stay in plaintext. |
+| Tamper-evident record | Each account's fills form a SHA-256 hash chain built inside Postgres. The anchor worker writes the head to the contract (`commit`), which only accepts a longer chain. `/verify/record/<handle>` checks every on-chain checkpoint; View holders also recompute every leaf. |
+| Contract v2 | `contracts/passes`: buyers pay their own storage, 10% fee accrues and is withdrawn by the admin, admin pause, delayed View tier, pass transfers, append-only `pass_log` and `commit_log`, and an in-place `migrate` from v1. 12 unit tests plus `scripts/contract-rehearsal.sh`, which upgrades a fresh v1 deployment on testnet and exercises every method. |
+| Least-privilege keys | The server holds only `privue-operator.testnet` (low balance): it can sponsor passes, list offers, move guest passes and anchor records. It cannot upgrade, pause or withdraw fees; the admin key never reaches the server. |
+| Chain indexer | `/api/cron/index` follows `pass_log` and `commit_log` by sequence number, so passes bought, renewed or moved outside the app show up. The chain is the source of truth; the tables are a rebuildable cache. |
+| Copy trading at scale | A trade queues one mirror job per copier (`lib/jobs.ts`). Workers lease jobs with `FOR UPDATE SKIP LOCKED`, run 8 in parallel, keep each copier's jobs in order, retry with backoff, and are idempotent per source fill. |
+| Workers | Separate price feed, indexer, anchor and queue workers (`/api/cron/[job]`), each with a DB slot so extra calls are no-ops. GitHub Actions calls them every 5 minutes (`workers.yml`); bots tick every 15. |
+| Migrations | Versioned and append-only in `lib/db.ts`, tracked in `schema_migrations`, run under an advisory lock. Tested on a copy of production data (`lib/db.integration.test.ts`). |
+| Abuse limits | Postgres rate limits on guest creation, sign-in, trades, profiles, sponsored passes, notes and record checks. |
+| Sessions | Every session has a row and can be revoked; "Sign out other devices" on Your passes. Signing in with a wallet moves a guest's passes (on-chain transfer), copy history and trader profile to the wallet. |
+| AI notes | Fresh TEE attestation and a signed response as before, plus a second NEAR AI model that reviews every draft for any hint of a position. Either check failing discards the note. |
+| Operations | `/api/health` (DB schema, contract, queue, worker freshness), JSON logs that redact trade fields and credentials, and a `runs` table for every worker run. The workers workflow fails, and GitHub emails, when health is not OK. |
+
+## What still needs mainnet or partners
+
+- **Real execution through Confidential Intents.** Needs mainnet funds and partner access from NEAR Intents.
+- **Paying for passes from any chain.** 1Click runs on mainnet only.
+- **Running the copy engine inside a TEE** (NEAR AI Cloud or Phala), so even Privue's operators can't read fills. Today fills are encrypted at rest, but the app server holds the key.
+- **Multisig or KMS for the admin key**, and a legal review before any real-money copy trading.
+
 ## Run it locally
 
 Requires Node 22+, a Neon (or any Postgres) database, and a funded NEAR testnet account for the sponsor key.
 
 ```bash
 npm ci
-cp .env.example .env.local   # fill in DATABASE_URL, SESSION_SECRET, NEAR_SPONSOR_KEY
+cp .env.example .env.local   # fill in DATABASE_URL, SESSION_SECRET, FILL_KEY (openssl rand -base64 32), NEAR_SPONSOR_ACCOUNT and NEAR_SPONSOR_KEY
 npm run dev                  # http://localhost:3000, tables are created on first request
 curl -X POST localhost:3000/api/cron/tick   # run one bot tick
 ```

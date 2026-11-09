@@ -1,5 +1,7 @@
 import { MARKETS, market } from "./assets";
 import { q } from "./db";
+import { enqueueMirrors } from "./jobs";
+import { GENESIS, fillAad, leafHash, open, seal, type FillBody } from "./ledger";
 import { paperBuy, paperSell, tokenPrices, type PaperFill } from "./oneclick";
 import { equity, publicStats, replay, type Fill, type PublicStats } from "./stats";
 
@@ -15,7 +17,16 @@ export type Trader = {
   created_at: string;
 };
 
-export type StoredFill = Fill & { id: number; account: string; handle: string; price: number; quote: unknown; source_fill: number | null };
+export type StoredFill = Fill & {
+  id: number;
+  seq: number;
+  hash: string;
+  account: string;
+  handle: string;
+  price: number;
+  quote: FillBody["quote"];
+  source_fill: number | null;
+};
 
 export const traderAccount = (handle: string) => `trader:${handle}`;
 export const copyAccount = (holder: string, handle: string) => `copy:${holder.toLowerCase()}:${handle}`;
@@ -36,24 +47,37 @@ export async function listTraders(): Promise<Trader[]> {
   return q<Trader>("select * from traders order by created_at asc");
 }
 
+/** Decrypts an account's sealed fills in chain order. */
 export async function accountFills(account: string): Promise<StoredFill[]> {
-  const rows = await q<Record<string, unknown>>(
-    "select id, account, handle, side, symbol, qty, usdc, price, quote, source_fill, created_at from fills where account = $1 order by id asc",
+  const rows = await q<{ id: string; seq: string; hash: string; account: string; handle: string; sealed: string; source_fill: string | null }>(
+    "select id, seq, hash, account, handle, sealed, source_fill from fills where account = $1 order by seq asc",
     [account],
   );
-  return rows.map((r) => ({
-    id: Number(r.id),
-    account: String(r.account),
-    handle: String(r.handle),
-    side: r.side as "buy" | "sell",
-    symbol: String(r.symbol),
-    qty: Number(r.qty),
-    usdc: Number(r.usdc),
-    price: Number(r.price),
-    quote: r.quote,
-    source_fill: r.source_fill == null ? null : Number(r.source_fill),
-    createdAt: new Date(String(r.created_at)).toISOString(),
-  }));
+  return rows.map((r) => {
+    const id = Number(r.id);
+    const body = open(r.sealed, fillAad(id));
+    return {
+      id,
+      seq: Number(r.seq),
+      hash: r.hash,
+      account: r.account,
+      handle: r.handle,
+      side: body.side,
+      symbol: body.symbol,
+      qty: body.qty,
+      usdc: body.usdc,
+      price: body.price,
+      quote: body.quote,
+      source_fill: r.source_fill == null ? null : Number(r.source_fill),
+      createdAt: body.createdAt,
+    };
+  });
+}
+
+export async function getFill(id: number): Promise<StoredFill | null> {
+  const [r] = await q<{ account: string }>("select account from fills where id = $1", [id]);
+  if (!r) return null;
+  return (await accountFills(r.account)).find((f) => f.id === id) ?? null;
 }
 
 export async function equitySeries(account: string, limit = 500): Promise<{ ts: string; value: number }[]> {
@@ -69,12 +93,40 @@ export async function accountStats(account: string, startCash: number, prices?: 
   return publicStats(startCash, fills, px, series.map((s) => s.value));
 }
 
-async function recordFill(account: string, handle: string, f: PaperFill, sourceFill: number | null): Promise<number> {
-  const rows = await q<{ id: number }>(
-    "insert into fills (account, handle, side, symbol, qty, usdc, price, quote, source_fill) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id",
-    [account, handle, f.side, f.asset.symbol, f.qty, f.usdc, f.price, JSON.stringify(f.quote), sourceFill],
-  );
-  return Number(rows[0].id);
+/**
+ * Seals the fill and appends it to the account's hash chain in one statement. The chain link is
+ * computed by Postgres from the current head, and the (account, seq) unique index turns a race
+ * into a retry instead of a fork.
+ */
+export async function recordFill(account: string, handle: string, f: PaperFill, sourceFill: number | null): Promise<number> {
+  const body: FillBody = {
+    side: f.side,
+    symbol: f.asset.symbol,
+    qty: f.qty,
+    usdc: f.usdc,
+    price: f.price,
+    quote: f.quote,
+    createdAt: new Date().toISOString(),
+  };
+  const leaf = leafHash(body);
+  for (let attempt = 1; ; attempt++) {
+    const [{ id }] = await q<{ id: string }>("select nextval(pg_get_serial_sequence('fills', 'id')) as id");
+    try {
+      await q(
+        `with last as (select seq, hash from fills where account = $2 order by seq desc limit 1)
+         insert into fills (id, account, handle, source_fill, created_at, seq, prev_hash, hash, sealed)
+         select $1, $2, $3, $4, $5,
+           coalesce((select seq from last), 0) + 1,
+           coalesce((select hash from last), $6),
+           encode(sha256(convert_to(coalesce((select hash from last), $6) || $7, 'UTF8')), 'hex'),
+           $8`,
+        [id, account, handle, sourceFill, body.createdAt, GENESIS, leaf, seal(body, fillAad(Number(id)))],
+      );
+      return Number(id);
+    } catch (e) {
+      if (attempt >= 4 || !/fills_account_seq|duplicate key/.test(String(e))) throw e;
+    }
+  }
 }
 
 export async function snapshot(account: string, startCash: number, prices: Record<string, number>): Promise<number> {
@@ -86,11 +138,11 @@ export async function snapshot(account: string, startCash: number, prices: Recor
 
 export type TradeOrder = { side: "buy"; symbol: string; usdc: number } | { side: "sell"; symbol: string; fraction: number };
 
-export type TradeResult = { fillId: number; fill: PaperFill; mirrored: number; skipped: number };
+export type TradeResult = { fillId: number; fill: PaperFill; queued: number };
 
 /**
- * Executes a paper trade at a live, signature-verified 1Click dry quote, then mirrors it
- * proportionally into every active blind-copy account for this trader.
+ * Executes a paper trade at a live, signature-verified 1Click dry quote, then queues one mirror job
+ * per active blind-copy pass. Workers apply them in parallel, in order per follower.
  */
 export async function trade(trader: Trader, order: TradeOrder): Promise<TradeResult> {
   if (!trader.markets.includes(order.symbol) && !MARKETS.some((m) => m.symbol === order.symbol)) throw new Error("unknown market");
@@ -115,55 +167,56 @@ export async function trade(trader: Trader, order: TradeOrder): Promise<TradeRes
   }
   const fillId = await recordFill(account, trader.handle, fill, null);
   await snapshot(account, trader.start_cash, prices);
-  const { mirrored, skipped } = await mirror(trader, order.side, order.symbol, fraction, fillId, prices);
-  return { fillId, fill, mirrored, skipped };
+  const queued = await enqueueMirrors({ handle: trader.handle, side: order.side, symbol: order.symbol, fraction, sourceFill: fillId, prices });
+  return { fillId, fill, queued };
 }
 
-async function mirror(
-  trader: Trader,
-  side: "buy" | "sell",
-  symbol: string,
-  fraction: number,
-  sourceFill: number,
-  prices: Record<string, number>,
-): Promise<{ mirrored: number; skipped: number }> {
-  const subs = await q<{ holder: string; allocation: number }>(
-    "select holder, allocation from passes where handle = $1 and tier = 'copy' and expires_at > now()",
-    [trader.handle],
-  );
-  let mirrored = 0;
-  let skipped = 0;
-  const asset = market(symbol);
-  for (const s of subs) {
-    const account = copyAccount(s.holder, trader.handle);
-    const start = Number(s.allocation);
-    try {
-      const book = replay(start, await accountFills(account));
-      const eq = equity(book, prices);
-      let f: PaperFill;
-      if (side === "buy") {
-        const usdc = Math.min(eq * fraction, book.cash);
-        const guard = riskGuard(book.positions[symbol]?.qty ?? 0, prices[symbol] ?? 0, usdc, eq);
-        if (guard) throw new SkipError(guard);
-        f = await paperBuy(asset, usdc);
-      } else {
-        const qty = (book.positions[symbol]?.qty ?? 0) * fraction;
-        if (qty * (prices[symbol] ?? 0) < 0.5) throw new SkipError("no mirrored position to sell");
-        f = await paperSell(asset, qty);
-      }
-      await recordFill(account, trader.handle, f, sourceFill);
-      await snapshot(account, start, prices);
-      mirrored++;
-    } catch (e) {
-      skipped++;
-      await q("insert into skipped_copies (account, source_fill, reason) values ($1,$2,$3)", [
-        account,
-        sourceFill,
-        e instanceof Error ? e.message.slice(0, 200) : "error",
-      ]);
+export type MirrorJob = {
+  handle: string;
+  holder: string;
+  allocation: number;
+  side: "buy" | "sell";
+  symbol: string;
+  fraction: number;
+  sourceFill: number;
+  prices: Record<string, number>;
+};
+
+/** Applies one queued mirror to one follower. Idempotent per (follower, source fill), so retries are safe. */
+export async function mirrorOne(j: MirrorJob): Promise<"mirrored" | "skipped" | "duplicate"> {
+  const account = copyAccount(j.holder, j.handle);
+  const done = await q("select 1 from fills where account = $1 and source_fill = $2 union all select 1 from skipped_copies where account = $1 and source_fill = $2", [
+    account,
+    j.sourceFill,
+  ]);
+  if (done.length) return "duplicate";
+  const asset = market(j.symbol);
+  const book = replay(j.allocation, await accountFills(account));
+  const eq = equity(book, j.prices);
+  let f: PaperFill;
+  try {
+    if (j.side === "buy") {
+      const usdc = Math.min(eq * j.fraction, book.cash);
+      const guard = riskGuard(book.positions[j.symbol]?.qty ?? 0, j.prices[j.symbol] ?? 0, usdc, eq);
+      if (guard) throw new SkipError(guard);
+      f = await paperBuy(asset, usdc);
+    } else {
+      const qty = (book.positions[j.symbol]?.qty ?? 0) * j.fraction;
+      if (qty * (j.prices[j.symbol] ?? 0) < 0.5) throw new SkipError("no mirrored position to sell");
+      f = await paperSell(asset, qty);
     }
+  } catch (e) {
+    if (!(e instanceof SkipError)) throw e;
+    await recordSkip(account, j.sourceFill, e.message);
+    return "skipped";
   }
-  return { mirrored, skipped };
+  await recordFill(account, j.handle, f, j.sourceFill);
+  await snapshot(account, j.allocation, j.prices);
+  return "mirrored";
+}
+
+export async function recordSkip(account: string, sourceFill: number, reason: string): Promise<void> {
+  await q("insert into skipped_copies (account, source_fill, reason) values ($1,$2,$3)", [account, sourceFill, reason.slice(0, 200)]);
 }
 
 class SkipError extends Error {}

@@ -4,17 +4,23 @@ import { q } from "@/lib/db";
 import { getTrader } from "@/lib/engine";
 import { EXPLORER, sponsoredBuy } from "@/lib/near";
 import { storePass } from "@/lib/passes";
+import { limit } from "@/lib/ratelimit";
 import { getSession } from "@/lib/session";
 
 export const maxDuration = 60;
 
-const Body = z.object({ handle: z.string(), tier: z.enum(["view", "copy"]) });
+const Body = z.object({ handle: z.string(), tier: z.enum(["view", "delayed", "copy"]) });
 const DAILY_CAP = Number(process.env.SPONSOR_DAILY_CAP ?? 60);
 
-/** Demo path for visitors without a testnet wallet: Privue's testnet account buys the pass on-chain for them. */
+/** Demo path for visitors without a testnet wallet: Privue's operator account buys the pass on-chain for them. */
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return fail("sign in first", 401);
+  const limited = await limit([
+    { name: "sponsor", max: 6, windowSec: 86400, by: session.sub },
+    { name: "sponsor-ip", max: 12, windowSec: 86400, by: "ip" },
+  ]);
+  if (limited) return limited;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail("invalid request");
   const { handle, tier } = parsed.data;

@@ -11,13 +11,20 @@ export async function activePass(holder: string, handle: string, tier: Tier): Pr
   return rows[0] ?? null;
 }
 
-export type Access = { owner: boolean; view: boolean; copy: boolean };
+export type Access = { owner: boolean; view: boolean; delayed: boolean; copy: boolean };
+
+/** Delayed View holders see the same feed, but only fills older than this. */
+export const DELAY_HOURS = 24;
 
 export async function accessFor(session: Session | null, trader: Trader): Promise<Access> {
-  if (!session) return { owner: false, view: false, copy: false };
+  if (!session) return { owner: false, view: false, delayed: false, copy: false };
   const owner = session.sub === trader.owner;
-  const [view, copy] = await Promise.all([activePass(session.sub, trader.handle, "view"), activePass(session.sub, trader.handle, "copy")]);
-  return { owner, view: owner || !!view, copy: !!copy };
+  const [view, delayed, copy] = await Promise.all([
+    activePass(session.sub, trader.handle, "view"),
+    activePass(session.sub, trader.handle, "delayed"),
+    activePass(session.sub, trader.handle, "copy"),
+  ]);
+  return { owner, view: owner || !!view, delayed: !!delayed, copy: !!copy };
 }
 
 export function json(data: unknown, status = 200): Response {

@@ -2,6 +2,7 @@ import { dueNote, generateNote, notesEnabled } from "./notes";
 import { q } from "./db";
 import { accountFills, getTrader, snapshot, symbolPrices, trade, traderAccount, type TradeOrder, type Trader } from "./engine";
 import { equity, replay } from "./stats";
+import { log as jlog } from "./log";
 
 export const SEED_TRADERS: Omit<Trader, "created_at">[] = [
   {
@@ -84,12 +85,24 @@ export async function claimTick(): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function tick(): Promise<TickLog[]> {
-  await ensureSeeded();
-  const prices = await symbolPrices();
-  for (const [symbol, price] of Object.entries(prices)) {
+/** Latest stored prices from the price worker, falling back to (and recording) a live fetch when stale. */
+async function freshPrices(maxAgeMin = 10): Promise<Record<string, number>> {
+  const rows = await q<{ symbol: string; price: number }>(
+    `select distinct on (symbol) symbol, price from prices where ts > now() - make_interval(mins => $1) order by symbol, ts desc`,
+    [maxAgeMin],
+  );
+  const stored = Object.fromEntries(rows.map((r) => [r.symbol, Number(r.price)]));
+  if (SEED_TRADERS.every((t) => t.markets.every((m) => stored[m] > 0))) return { ...(await symbolPrices().catch(() => ({}))), ...stored };
+  const live = await symbolPrices();
+  for (const [symbol, price] of Object.entries(live)) {
     if (price > 0) await q("insert into prices (symbol, price) values ($1, $2)", [symbol, price]);
   }
+  return live;
+}
+
+export async function tick(): Promise<TickLog[]> {
+  await ensureSeeded();
+  const prices = await freshPrices();
   const log: TickLog[] = [];
   for (const seed of SEED_TRADERS) {
     const trader = (await getTrader(seed.handle))!;
@@ -112,7 +125,7 @@ export async function tick(): Promise<TickLog[]> {
           : { side: "sell", symbol, fraction: 1 };
       try {
         const r = await trade(trader, order);
-        log.push({ handle: trader.handle, symbol, action, detail: `fill ${r.fillId}, mirrored ${r.mirrored}, skipped ${r.skipped}` });
+        log.push({ handle: trader.handle, symbol, action, detail: `fill ${r.fillId}, ${r.queued} copies queued` });
         acted = true;
       } catch (e) {
         log.push({ handle: trader.handle, symbol, action: "error", detail: e instanceof Error ? e.message : String(e) });
@@ -132,6 +145,7 @@ export async function tick(): Promise<TickLog[]> {
       }
     }
   }
+  jlog("info", "tick.done", { actions: log.map((l) => `${l.handle}:${l.action}`) });
   return log;
 }
 

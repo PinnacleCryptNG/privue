@@ -22,7 +22,7 @@ export default function MePage() {
     );
 
   const handle = me.traders[0];
-  const views = me.passes.filter((p) => p.tier === "view");
+  const views = me.passes.filter((p) => p.tier !== "copy");
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -32,6 +32,11 @@ export default function MePage() {
     router.push("/");
   }
 
+  async function signOutEverywhere() {
+    const r = await fetch("/api/auth/sessions", { method: "DELETE" }).then((x) => x.json());
+    alert(`Signed out on ${r.revoked ?? 0} other ${r.revoked === 1 ? "device" : "devices"}.`);
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-12 px-5 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -39,7 +44,10 @@ export default function MePage() {
           <h1 className="text-3xl font-semibold tracking-[-0.02em]">{shortId(me.session.sub)}</h1>
           <p className="mt-1 text-mute">{me.session.kind === "guest" ? "Demo account" : "NEAR testnet wallet"}</p>
         </div>
-        <button className="btn btn-ghost h-10 text-sm" onClick={signOut}>Sign out</button>
+        <div className="flex gap-2">
+          <button className="btn btn-ghost h-10 text-sm" onClick={signOutEverywhere}>Sign out other devices</button>
+          <button className="btn btn-ghost h-10 text-sm" onClick={signOut}>Sign out</button>
+        </div>
       </div>
 
       <section className="space-y-3">
@@ -71,7 +79,10 @@ export default function MePage() {
           <ul className="card divide-y divide-line">
             {views.map((p) => (
               <li key={p.handle} className="flex items-center justify-between px-4 py-3 text-sm">
-                <Link href={`/t/${p.handle}`} className="font-medium hover:text-frost">@{p.handle}</Link>
+                <Link href={`/t/${p.handle}`} className="font-medium hover:text-frost">
+                  @{p.handle}
+                  {p.tier === "delayed" ? <span className="ml-2 text-xs text-mute">24h delay</span> : null}
+                </Link>
                 <span className="text-mute">until {new Date(p.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
               </li>
             ))}

@@ -54,7 +54,7 @@ const [viewT, copyT] = [traders[0].handle, traders[1].handle];
 async function buy(handle, tier) {
   const offer = (await (await fetch(RPC, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "call_function", finality: "optimistic", account_id: CONTRACT, method_name: "get_offer", args_base64: Buffer.from(JSON.stringify({ handle, tier })).toString("base64") } }) })).json()).result;
   const o = JSON.parse(Buffer.from(offer.result).toString());
-  const out = await account.callFunctionRaw({ contractId: CONTRACT, methodName: "buy_pass", args: { handle, tier, holder: accountId }, deposit: BigInt(o.price), gas: 50_000_000_000_000n });
+  const out = await account.callFunctionRaw({ contractId: CONTRACT, methodName: "buy_pass", args: { handle, tier, holder: accountId }, deposit: BigInt(o.price) + 10n ** 22n, gas: 50_000_000_000_000n });
   const ok = out.status?.SuccessValue !== undefined;
   check(ok, `buy_pass ${tier} @${handle} for ${(Number(o.price) / 1e24).toFixed(2)} NEAR`, `https://testnet.nearblocks.io/txns/${out.transaction.hash}`);
   const tx = (await (await fetch(RPC, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "EXPERIMENTAL_tx_status", params: { tx_hash: out.transaction.hash, sender_account_id: accountId, wait_until: "FINAL" } }) })).json()).result;
@@ -75,6 +75,15 @@ const blind = await api(`/api/traders/${copyT}/feed`);
 check(blind.status === 403, `copy pass stays blind on @${copyT}`, blind.body?.error);
 const me = (await api("/api/me")).body;
 check(me?.passes?.length >= 2, "/me lists the wallet's passes", (me?.passes ?? []).map((p) => `${p.tier}@${p.handle}`).join(", "));
+
+// 4. v2 architecture: delayed tier, on-chain record checkpoints, health
+const offers = await view("list_offers", { limit: 100 });
+check(offers.some((o) => o.tier === "delayed"), "contract lists delayed view passes", offers.filter((o) => o.tier === "delayed").map((o) => `@${o.handle}`).join(", "));
+const rec = await api(`/api/traders/${viewT}/record`);
+check(rec.status === 200 && ["verified", "pending"].includes(rec.body.verdict) && rec.body.linked, `@${viewT}'s record matches its NEAR testnet checkpoints`, `${rec.body.verdict}, ${rec.body.fills} fills, ${rec.body.checkpoints?.length ?? 0} checkpoints`);
+check(rec.body.leaves?.ok === true, "view pass recomputes every leaf hash from the decrypted fills", `${rec.body.leaves?.checked ?? 0} leaves`);
+const health = await api("/api/health");
+check(health.body?.db?.ok && health.body?.chain?.ok, "/api/health reaches Postgres and the contract", `schema ${health.body?.db?.value?.schema}, problems: ${(health.body?.problems ?? []).join("; ") || "none"}`);
 
 const after = await balance();
 console.log(`account ${accountId}: ${after.toFixed(4)} NEAR (spent ${(before - after).toFixed(4)} testnet NEAR incl. gas)`);

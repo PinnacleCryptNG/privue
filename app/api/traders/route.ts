@@ -5,6 +5,7 @@ import { q } from "@/lib/db";
 import { getTrader, listTraders } from "@/lib/engine";
 import { sponsoredSetOffer } from "@/lib/near";
 import { publicContext, publicTrader } from "@/lib/public";
+import { limit } from "@/lib/ratelimit";
 import { getSession } from "@/lib/session";
 import { MARKETS } from "@/lib/assets";
 
@@ -24,11 +25,19 @@ const Create = z.object({
   copyPrice: z.number().min(0.01).max(100),
 });
 
+/** The delayed tier sees the same feed a day late, at a fraction of the live price. */
+const DELAYED_SHARE = 0.25;
+
 const toYocto = (near: number) => (BigInt(Math.round(near * 1e6)) * 10n ** 18n).toString();
 
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return fail("sign in first", 401);
+  const limited = await limit([
+    { name: "create-trader", max: 3, windowSec: 86400, by: "ip" },
+    { name: "create-trader-all", max: 50, windowSec: 86400, by: "global" },
+  ]);
+  if (limited) return limited;
   const parsed = Create.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "invalid profile");
   const b = parsed.data;
@@ -36,7 +45,11 @@ export async function POST(req: Request) {
   if (mine.length) return fail("you already have a trader profile");
   if (await getTrader(b.handle)) return fail("that handle is taken");
   const owner = session.kind === "near" ? session.sub : undefined;
-  const txs = [await sponsoredSetOffer(b.handle, "view", toYocto(b.viewPrice), 25, owner), await sponsoredSetOffer(b.handle, "copy", toYocto(b.copyPrice), 10, owner)];
+  const txs = [
+    await sponsoredSetOffer(b.handle, "view", toYocto(b.viewPrice), 25, owner),
+    await sponsoredSetOffer(b.handle, "delayed", toYocto(b.viewPrice * DELAYED_SHARE), 100, owner),
+    await sponsoredSetOffer(b.handle, "copy", toYocto(b.copyPrice), 10, owner),
+  ];
   await q(
     "insert into traders (handle, name, owner, bio, style, markets, start_cash, is_bot) values ($1,$2,$3,$4,$5,$6,10000,false)",
     [b.handle, b.name, session.sub, b.bio, b.style, MARKETS.map((m) => m.symbol)],

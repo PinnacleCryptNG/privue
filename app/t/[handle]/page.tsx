@@ -14,7 +14,7 @@ import type { PublicTrader } from "@/lib/public";
 type Detail = {
   trader: PublicTrader;
   curve: { ts: string; value: number }[];
-  access: { owner: boolean; view: boolean; copy: boolean };
+  access: { owner: boolean; view: boolean; delayed: boolean; copy: boolean };
   note: { body: string; model: string; created_at: string; proof: { signature: { status: string; signingAddress: string | null }; attestation: { verifiedAt: string } } } | null;
   signedFills: number;
   latestFill: number | null;
@@ -27,15 +27,17 @@ export default function TraderPage() {
   const [d, setD] = useState<Detail | null>(null);
   const [missing, setMissing] = useState(false);
   const [feed, setFeed] = useState<FeedFill[] | null>(null);
+  const [hidden, setHidden] = useState(0);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/traders/${handle}`, { cache: "no-store" });
     if (r.status === 404) return setMissing(true);
     const data: Detail = await r.json();
     setD(data);
-    if (data.access.view) {
+    if (data.access.view || data.access.delayed) {
       const f = await fetch(`/api/traders/${handle}/feed`, { cache: "no-store" }).then((x) => x.json());
       setFeed(f.fills ?? []);
+      setHidden(f.hidden ?? 0);
     } else setFeed(null);
   }, [handle]);
 
@@ -84,10 +86,17 @@ export default function TraderPage() {
         <section className="space-y-3">
           <div className="flex items-baseline justify-between">
             <h2 className="font-medium">Trades</h2>
-            <span className="label">{d.signedFills} signed fills</span>
+            <span className="label">
+              {d.signedFills} signed fills · <Link href={`/verify/record/${t.handle}`} className="text-frost">check the record on-chain</Link>
+            </span>
           </div>
           {d.access.view && feed ? (
             <OpenLedger fills={feed} />
+          ) : d.access.delayed && feed ? (
+            <>
+              <p className="text-sm text-mute">Delayed view: trades appear 24 hours after they fill.{hidden ? ` ${hidden} newer ${hidden === 1 ? "trade is" : "trades are"} still under the delay.` : ""}</p>
+              <OpenLedger fills={feed} />
+            </>
           ) : d.access.copy ? (
             <p className="card px-4 py-5 text-sm text-mute">
               You&apos;re copying {t.name}. Copy passes are blind: your account mirrors each trade, but the trades stay hidden.{" "}
@@ -113,7 +122,7 @@ export default function TraderPage() {
 
       <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
         <h2 className="font-medium">Passes</h2>
-        <PassPanel offers={t.offers} owner={d.access.owner} held={{ view: d.access.view && !d.access.owner, copy: d.access.copy }} onBought={load} />
+        <PassPanel offers={t.offers} owner={d.access.owner} held={{ view: d.access.view && !d.access.owner, delayed: d.access.delayed, copy: d.access.copy }} onBought={load} />
         <p className="px-1 text-xs text-faint">Passes are minted by the Privue contract on NEAR testnet. Trades are paper fills at live NEAR Intents quotes.</p>
       </aside>
     </div>

@@ -10,7 +10,15 @@ export const CONTRACT_ID = process.env.NEXT_PUBLIC_PASS_CONTRACT ?? "privue-app.
 export const RPC_URL = process.env.NEAR_RPC_URL ?? "https://rpc.testnet.fastnear.com";
 export const EXPLORER = "https://testnet.nearblocks.io";
 
-export type Tier = "view" | "copy";
+export type Tier = "view" | "copy" | "delayed";
+export const TIERS: Tier[] = ["view", "delayed", "copy"];
+
+/** Contract v2 charges the caller for the storage it writes and refunds the change in the same call. */
+export const STORAGE_DEPOSIT = 10_000_000_000_000_000_000_000n; // 0.01 NEAR
+
+export type PassEvent = { seq: number; kind: "bought" | "renewed" | "transferred"; handle: string; tier: Tier; holder: string; from: string | null; expires_at_ms: number; at_ms: number };
+export type Commitment = { handle: string; count: number; head: string; at_ms: number };
+export type ContractInfo = { admin: string; operator: string; paused: boolean; fees: string; fee_bps: number; passes_logged: number; commits_logged: number };
 
 export type Offer = {
   handle: string;
@@ -44,13 +52,14 @@ async function rpc<T>(method: string, params: unknown): Promise<T> {
 }
 
 export async function view<T>(method: string, args: Record<string, unknown>): Promise<T> {
-  const r = await rpc<{ result: number[] }>("query", {
+  const r = await rpc<{ result?: number[]; error?: string }>("query", {
     request_type: "call_function",
     finality: "optimistic",
     account_id: CONTRACT_ID,
     method_name: method,
     args_base64: Buffer.from(JSON.stringify(args)).toString("base64"),
   });
+  if (!r.result) throw new Error(`NEAR view ${method}: ${String(r.error ?? "no result").slice(0, 200)}`);
   return JSON.parse(Buffer.from(r.result).toString("utf8")) as T;
 }
 
@@ -58,6 +67,10 @@ export const listOffers = () => view<Offer[]>("list_offers", { limit: 100 });
 export const getOffer = (handle: string, tier: Tier) => view<Offer | null>("get_offer", { handle, tier });
 export const getPass = (handle: string, tier: Tier, holder: string) =>
   view<OnchainPass | null>("get_pass", { handle, tier, holder });
+export const passLog = (from: number, limit = 100) => view<PassEvent[]>("pass_log", { from, limit });
+export const commitLog = (from: number, limit = 100) => view<Commitment[]>("commit_log", { from, limit });
+export const getCommitment = (handle: string) => view<Commitment | null>("get_commitment", { handle });
+export const contractInfo = () => view<ContractInfo>("info", {});
 
 /** Sponsor calls share one access key, so concurrent requests can collide on nonce or expiry; retry those. */
 async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
@@ -72,41 +85,48 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
   }
 }
 
+/**
+ * The operator account: a separate, low-balance testnet account the contract trusts to sponsor passes,
+ * list offers, move guest passes and anchor commitments. It cannot upgrade the contract, pause it or
+ * withdraw fees; those stay with the admin key, which never reaches the server.
+ */
+export const SPONSOR_ID = process.env.NEAR_SPONSOR_ACCOUNT ?? "privue-operator.testnet";
+
 function sponsor(): Account {
   const key = process.env.NEAR_SPONSOR_KEY;
   if (!key) throw new Error("NEAR_SPONSOR_KEY is not set");
   const provider = new JsonRpcProvider({ url: RPC_URL });
-  return new Account(CONTRACT_ID, provider, KeyPairSigner.fromSecretKey(key as KeyPairString));
+  return new Account(SPONSOR_ID, provider, KeyPairSigner.fromSecretKey(key as KeyPairString));
 }
 
-/** Demo path: the Privue testnet account pays for a pass on behalf of a guest holder. */
+async function sponsorCall<T>(methodName: string, args: Record<string, unknown>, deposit: bigint, gas = 50_000_000_000_000n): Promise<{ tx: string; value: T }> {
+  const outcome = await withRetry(() => sponsor().callFunctionRaw({ contractId: CONTRACT_ID, methodName, args, deposit, gas }));
+  const status = outcome.status as { SuccessValue?: string; Failure?: unknown };
+  if (status.Failure) throw new Error(`${methodName} failed: ${JSON.stringify(status.Failure).slice(0, 200)}`);
+  const raw = Buffer.from(status.SuccessValue ?? "", "base64").toString("utf8");
+  return { tx: outcome.transaction.hash, value: (raw ? JSON.parse(raw) : null) as T };
+}
+
+/** Demo path: the Privue operator account pays for a pass on behalf of a guest holder. */
 export async function sponsoredBuy(handle: string, tier: Tier, holder: string): Promise<{ tx: string; pass: OnchainPass }> {
   const offer = await getOffer(handle, tier);
   if (!offer) throw new Error("no such offer");
-  const outcome = await withRetry(() =>
-    sponsor().callFunctionRaw({
-      contractId: CONTRACT_ID,
-      methodName: "buy_pass",
-      args: { handle, tier, holder },
-      deposit: BigInt(offer.price),
-      gas: 50_000_000_000_000n,
-    }),
-  );
-  const status = outcome.status as { SuccessValue?: string; Failure?: unknown };
-  if (status.Failure) throw new Error(`buy_pass failed: ${JSON.stringify(status.Failure).slice(0, 200)}`);
-  const pass = JSON.parse(Buffer.from(status.SuccessValue ?? "", "base64").toString("utf8")) as OnchainPass;
-  return { tx: outcome.transaction.hash, pass };
+  const { tx, value } = await sponsorCall<OnchainPass>("buy_pass", { handle, tier, holder }, BigInt(offer.price) + STORAGE_DEPOSIT);
+  return { tx, pass: value };
 }
 
 export async function sponsoredSetOffer(handle: string, tier: Tier, priceYocto: string, supply: number, owner?: string): Promise<string> {
-  const outcome = await withRetry(() =>
-    sponsor().callFunctionRaw({
-      contractId: CONTRACT_ID,
-      methodName: "set_offer",
-      args: { handle, tier, price: priceYocto, supply, period_days: 30, owner: owner ?? null },
-    }),
-  );
-  return outcome.transaction.hash;
+  const args = { handle, tier, price: priceYocto, supply, period_days: 30, owner: owner ?? null };
+  return (await sponsorCall("set_offer", args, STORAGE_DEPOSIT)).tx;
+}
+
+export async function sponsoredTransfer(handle: string, tier: Tier, holder: string, to: string): Promise<{ tx: string; pass: OnchainPass }> {
+  const { tx, value } = await sponsorCall<OnchainPass>("transfer_pass", { handle, tier, holder, to }, STORAGE_DEPOSIT);
+  return { tx, pass: value };
+}
+
+export async function anchorCommitment(handle: string, count: number, head: string): Promise<string> {
+  return (await sponsorCall("commit", { handle, count, head }, STORAGE_DEPOSIT)).tx;
 }
 
 /* NEP-413 signed-message verification for wallet sign-in. */

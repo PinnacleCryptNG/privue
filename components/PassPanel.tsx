@@ -7,10 +7,11 @@ import { useMe } from "./MeProvider";
 
 const COPY = {
   view: { title: "View pass", body: "See every trade the moment it fills, with its signed quote." },
+  delayed: { title: "Delayed view pass", body: "The same trade feed, 24 hours late. Learn the strategy for a fraction of the live price." },
   copy: { title: "Copy pass", body: "Your paper account mirrors each trade at your size. You never see the trades, so the signal can't leak." },
 };
 
-export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; owner: boolean; held: { view: boolean; copy: boolean }; onBought: () => void }) {
+export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; owner: boolean; held: { view: boolean; delayed: boolean; copy: boolean }; onBought: () => void }) {
   const { me, setSignInOpen, refresh } = useMe();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tier: string; text: string; link?: string; bad?: boolean } | null>(null);
@@ -53,7 +54,7 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
 
   return (
     <div className="space-y-3">
-      {(["view", "copy"] as const).map((tier) => {
+      {(["view", "delayed", "copy"] as const).map((tier) => {
         const o = offers.find((x) => x.tier === tier);
         if (!o) return null;
         const left = o.supply - o.sold;

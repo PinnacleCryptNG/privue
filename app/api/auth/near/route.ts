@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { fail, json } from "@/lib/access";
 import { AUTH_MESSAGE, verifyNep413 } from "@/lib/near";
-import { createSession } from "@/lib/session";
+import { log } from "@/lib/log";
+import { mergeGuest, type MergeResult } from "@/lib/merge";
+import { limit } from "@/lib/ratelimit";
+import { createSession, getSession } from "@/lib/session";
 
 const Body = z.object({
   accountId: z.string().min(2).max(64),
@@ -12,7 +15,11 @@ const Body = z.object({
   callbackUrl: z.string().max(500).nullish(),
 });
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
+  const limited = await limit([{ name: "near-signin", max: 20, windowSec: 600, by: "ip" }]);
+  if (limited) return limited;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail("bad sign-in payload");
   const jar = await cookies();
@@ -23,6 +30,14 @@ export async function POST(req: Request) {
   if (!ok) return fail("signature did not verify for this account", 401);
   jar.delete("privue_nonce");
   const session = { sub: b.accountId.toLowerCase(), kind: "near" as const };
+  const previous = await getSession();
+  let merged: MergeResult | null = null;
+  if (previous?.kind === "guest") {
+    merged = await mergeGuest(previous.sub, session.sub).catch((e) => {
+      log("error", "merge.failed", { error: e instanceof Error ? e.message : String(e) });
+      return null;
+    });
+  }
   await createSession(session);
-  return json({ session });
+  return json({ session, merged });
 }

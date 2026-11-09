@@ -3,6 +3,7 @@ import { fail, json } from "@/lib/access";
 import { q } from "@/lib/db";
 import { getTrader } from "@/lib/engine";
 import { generateNote, NoteError, notesEnabled } from "@/lib/notes";
+import { limit } from "@/lib/ratelimit";
 import { getSession } from "@/lib/session";
 
 export const maxDuration = 120;
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
   if (!notesEnabled()) return fail("strategy notes are off on this deployment", 503);
   const session = await getSession();
   if (!session) return fail("sign in first", 401);
+  const limited = await limit([{ name: "notes-ip", max: 6, windowSec: 86400, by: "ip" }]);
+  if (limited) return limited;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return fail("invalid request");
   const trader = await getTrader(parsed.data.handle);

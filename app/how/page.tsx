@@ -13,12 +13,16 @@ const STEPS = [
     p: "Return, win rate, drawdown and an hourly equity curve are computed from the signed fills. Anyone can re-check the signature on any fill without learning what was traded.",
   },
   {
+    h: "The record can't be edited",
+    p: "Every fill is sealed (AES-256-GCM) before it reaches the database and linked into a SHA-256 hash chain. The chain's head is anchored on NEAR. Dropping or changing a losing trade changes every later hash, and the public record check shows the mismatch.",
+  },
+  {
     h: "Passes are scarce and on-chain",
     p: "Each trader sells a fixed number of passes through the Privue contract on NEAR. The trader gets 90% of every sale, Privue keeps 10%. Passes run for 30 days.",
   },
   {
     h: "View, or copy blind",
-    p: "A view pass shows every trade the moment it fills. A copy pass mirrors each trade into your own account, sized to your balance, and never shows it to you. The signal can't be leaked or front-run, so traders can sell more of them.",
+    p: "A view pass shows every trade the moment it fills; a delayed view pass shows them 24 hours later, for less. A copy pass mirrors each trade into your own account, sized to your balance, and never shows it to you. The signal can't be leaked or front-run, so traders can sell more of them.",
   },
   {
     h: "A risk check before every copy",
@@ -26,7 +30,7 @@ const STEPS = [
   },
   {
     h: "Notes without positions",
-    p: "NEAR AI Cloud models run inside a TEE and write a short weekly strategy note from the trader's fills. The note describes the approach without naming positions, and Privue checks the model's attestation.",
+    p: "NEAR AI Cloud models run inside a TEE and write a short weekly strategy note from the trader's fills. The note describes the approach without naming positions, and Privue checks the model's attestation. A second NEAR AI model reviews every draft, and any hint of a position discards it.",
   },
 ];
 

@@ -61,12 +61,12 @@ export async function signInWithNear(): Promise<void> {
   await finishNearSignIn({ accountId: signed.accountId, publicKey: signed.publicKey, signature: signed.signature, callbackUrl });
 }
 
-export async function buyWithWallet(handle: string, tier: "view" | "copy", holder: string, priceYocto: string): Promise<string | null> {
+export async function buyWithWallet(handle: string, tier: "view" | "delayed" | "copy", holder: string, priceYocto: string): Promise<string | null> {
   const wallet = await connectedWallet();
   const { actionCreators } = await import("@near-js/transactions");
   const result = await wallet.signAndSendTransaction({
     receiverId: CONTRACT_ID,
-    actions: [actionCreators.functionCall("buy_pass", { handle, tier, holder }, 50_000_000_000_000n, BigInt(priceYocto))],
+    actions: [actionCreators.functionCall("buy_pass", { handle, tier, holder }, 50_000_000_000_000n, BigInt(priceYocto) + 10_000_000_000_000_000_000_000n)],
     callbackUrl: `${window.location.origin}/t/${handle}?bought=${tier}`,
   });
   return result && "transaction" in result ? result.transaction.hash : null;

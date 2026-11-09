@@ -19,6 +19,8 @@ export function Footer() {
           <Link href="/traders" className="hover:text-text">Traders</Link>
           <Link href="/how" className="hover:text-text">How it works</Link>
           <Link href="/me" className="hover:text-text">Your passes</Link>
+          <Link href="/terms" className="hover:text-text">Terms</Link>
+          <Link href="/privacy" className="hover:text-text">Privacy</Link>
           <a href="https://github.com/PinnacleCryptNG/privue" className="hover:text-text">GitHub</a>
           <a href="https://testnet.nearblocks.io/address/privue-app.testnet" className="hover:text-text">Contract</a>
         </nav>

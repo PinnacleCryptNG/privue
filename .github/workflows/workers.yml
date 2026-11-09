@@ -1,0 +1,28 @@
+name: Workers and uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PRIVUE_URL: ${{ vars.PRIVUE_URL || 'https://privue-app.vercel.app' }}
+    steps:
+      # Each endpoint claims a DB slot, so overlapping or extra calls are harmless no-ops.
+      - name: Price feed
+        run: curl -fsS --max-time 60 "$PRIVUE_URL/api/cron/prices"
+      - name: Chain indexer (pass and commitment logs)
+        run: curl -fsS --max-time 60 "$PRIVUE_URL/api/cron/index"
+      - name: Anchor fill commitments on NEAR testnet
+        run: curl -fsS --max-time 120 "$PRIVUE_URL/api/cron/anchor"
+      - name: Drain copy-trade queue
+        run: curl -fsS --max-time 290 "$PRIVUE_URL/api/cron/work"
+      - name: Health (fails the run, and emails the repo owner, when Privue is unhealthy)
+        run: |
+          body=$(curl -sS --max-time 30 -w '\n%{http_code}' "$PRIVUE_URL/api/health")
+          echo "$body" | head -n -1
+          test "$(echo "$body" | tail -n 1)" = "200"
