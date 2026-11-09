@@ -24,6 +24,16 @@ Privue is private copy trading on NEAR. A trader's track record is public and ve
 
 To use a real wallet instead, choose **Connect a NEAR testnet wallet** (Meteor or Intear). Sign-in is a NEP-413 signed message; passes are bought from your own testnet balance with `buy_pass`.
 
+### Check the wallet path from a terminal
+
+`npm run e2e:testnet -- <account>.testnet` runs the whole wallet path against the live app on testnet. You need an account with a key in `~/.near-credentials/testnet`, and `near account create-account sponsor-by-faucet-service` gives you one with 10 free testnet NEAR. The script:
+
+1. signs in with a NEP-413 message, and checks that the same signature can't sign in as another account;
+2. buys a View pass and a Copy pass with `buy_pass`, paid from the account's own testnet NEAR;
+3. checks on-chain that the contract paid the trader 90% of each sale;
+4. checks that Privue reads each pass back from the chain;
+5. checks that the View pass unlocks the trade feed and the Copy pass stays blind (403).
+
 ## What's real and what isn't
 
 - **Prices are real.** Every fill uses a live, signed quote from the NEAR Intents 1Click API (`POST /v0/quote` with `dry: true`). Privue verifies the signature with `verifyQuoteSignature` before storing the fill, and stores the whole quote.
