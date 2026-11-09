@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Blinds } from "@/components/Blinds";
 
 export const metadata: Metadata = { title: "How it works" };
 
 const STEPS = [
   {
     h: "Trades stay private",
-    p: "Traders place orders through Privue. Each one is priced by a live NEAR Intents 1Click quote, which comes back signed by 1Click. On mainnet the same order settles through Confidential Intents, so it never shows up on a public explorer.",
+    p: "Traders place orders on their Privue desk. Each one is priced by a live NEAR Intents 1Click quote, signed by 1Click. On mainnet the same order would settle through Confidential Intents, so it never appears on a public explorer.",
   },
   {
     h: "The track record is public",
@@ -21,7 +22,7 @@ const STEPS = [
     p: "Each trader sells a fixed number of passes through the Privue contract on NEAR. The trader gets 90% of every sale, Privue keeps 10%. Passes run for 30 days.",
   },
   {
-    h: "View, or copy blind",
+    h: "Watch, wait, or copy blind",
     p: "A view pass shows every trade the moment it fills; a delayed view pass shows them 24 hours later, for less. A copy pass mirrors each trade into your own account, sized to your balance, and never shows it to you. The signal can't be leaked or front-run, so traders can sell more of them.",
   },
   {
@@ -36,33 +37,40 @@ const STEPS = [
 
 export default function How() {
   return (
-    <div className="mx-auto max-w-3xl px-5 py-12">
-      <h1 className="text-3xl font-semibold tracking-[-0.02em]">How Privue works</h1>
-      <p className="mt-3 text-mute">
-        Copy trading usually means showing everyone your trades. On Privue the track record is public and the trades are private. Traders choose
-        who sees them.
-      </p>
-      <ol className="mt-10 space-y-8">
+    <div className="mx-auto max-w-6xl px-5 py-14">
+      <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:items-end">
+        <div>
+          <h1 className="display text-5xl sm:text-6xl">How Privue works.</h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-mute">
+            Copy trading usually means showing everyone your trades. On Privue the record is public and the trades sit behind the blinds. Traders
+            choose who looks through, and how.
+          </p>
+        </div>
+        <div className="card hidden overflow-hidden lg:block">
+          <Blinds count={4} slat={40} offsetMs={400} />
+        </div>
+      </div>
+      <ol className="mt-16 grid gap-px overflow-hidden rounded-[14px] border border-line bg-line md:grid-cols-2">
         {STEPS.map((s, i) => (
-          <li key={s.h} className="grid gap-3 sm:grid-cols-[3rem_1fr]">
-            <span className="num text-sm text-frost">{String(i + 1).padStart(2, "0")}</span>
-            <div>
-              <h2 className="font-semibold">{s.h}</h2>
-              <p className="mt-1.5 leading-relaxed text-mute">{s.p}</p>
-            </div>
+          <li key={s.h} className="bg-panel p-6 sm:p-8">
+            <span className="num text-sm font-semibold text-amber">{String(i + 1).padStart(2, "0")}</span>
+            <h2 className="mt-3 text-xl font-bold tracking-[-0.025em]">{s.h}</h2>
+            <p className="mt-2 leading-relaxed text-mute">{s.p}</p>
           </li>
         ))}
+        <li className="slatlines bg-panel p-6 sm:p-8">
+          <span className="num text-sm font-semibold text-amber">Testnet</span>
+          <h2 className="mt-3 text-xl font-bold tracking-[-0.025em]">What&apos;s real today</h2>
+          <p className="mt-2 leading-relaxed text-mute">
+            Prices are real: live, signed 1Click quotes from NEAR Intents mainnet. Fills are paper fills, so no money moves. Passes, payouts and
+            record checkpoints are real transactions on NEAR testnet. Settling trades through Confidential Intents needs partner access and
+            mainnet.
+          </p>
+        </li>
       </ol>
-      <div className="card mt-12 p-5 text-sm leading-relaxed text-mute">
-        <h2 className="mb-2 font-semibold text-text">What&apos;s real during the hackathon</h2>
-        <p>
-          The prices are real: live, signed 1Click quotes on NEAR Intents mainnet. The fills are paper fills, so no money moves. Passes are real
-          transactions on NEAR testnet. Confidential settlement through Confidential Intents needs partner access, which is invite-only.
-        </p>
-      </div>
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/traders" className="btn btn-primary">See the traders</Link>
-        <Link href="/me" className="btn btn-ghost">Start trading</Link>
+      <div className="mt-12 flex flex-wrap gap-3">
+        <Link href="/traders" className="btn btn-primary h-12 px-6">See the traders</Link>
+        <Link href="/me" className="btn btn-ghost h-12 px-6">Open your desk</Link>
       </div>
     </div>
   );

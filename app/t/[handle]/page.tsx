@@ -54,7 +54,7 @@ export default function TraderPage() {
       .then(load);
   }, [search, me?.session, handle, refresh, load]);
 
-  if (missing) return <div className="mx-auto max-w-6xl px-5 py-24 text-mute">No trader called @{handle}. <Link className="text-frost" href="/traders">See all traders</Link></div>;
+  if (missing) return <div className="mx-auto max-w-6xl px-5 py-24 text-mute">No trader called @{handle}. <Link className="text-amber" href="/traders">See all traders</Link></div>;
   if (!d) return <div className="mx-auto max-w-6xl px-5 py-24 text-mute">Loading…</div>;
   const t = d.trader;
 
@@ -63,10 +63,10 @@ export default function TraderPage() {
       <div className="min-w-0 space-y-6">
         <div>
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="text-3xl font-semibold tracking-[-0.02em]">{t.name}</h1>
+            <h1 className="display text-5xl">{t.name}</h1>
             <span className="text-mute">@{t.handle}</span>
           </div>
-          <p className="mt-2 max-w-xl text-mute">{t.bio}</p>
+          <p className="mt-3 max-w-xl text-lg text-mute">{t.bio}</p>
           <p className="label mt-2">
             {t.style} · trades {t.markets.join(", ")} · {t.stats.lastFillAt ? `last trade ${ago(t.stats.lastFillAt)}` : "no trades yet"} · {t.copiers} copying
             {t.isBot ? " · demo strategy" : ""}
@@ -75,7 +75,7 @@ export default function TraderPage() {
 
         <div className="card p-4 sm:p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-medium">Equity</h2>
+            <h2 className="font-bold tracking-[-0.015em]">Equity</h2>
             <span className="label">hourly, from $10,000 paper</span>
           </div>
           <EquityChart points={d.curve} start={t.stats.startCash} />
@@ -85,9 +85,9 @@ export default function TraderPage() {
 
         <section className="space-y-3">
           <div className="flex items-baseline justify-between">
-            <h2 className="font-medium">Trades</h2>
+            <h2 className="font-bold tracking-[-0.015em]">Trades</h2>
             <span className="label">
-              {d.signedFills} signed fills · <Link href={`/verify/record/${t.handle}`} className="text-frost">check the record on-chain</Link>
+              {d.signedFills} signed fills · <Link href={`/verify/record/${t.handle}`} className="text-amber">check the record on-chain</Link>
             </span>
           </div>
           {d.access.view && feed ? (
@@ -100,7 +100,7 @@ export default function TraderPage() {
           ) : d.access.copy ? (
             <p className="card px-4 py-5 text-sm text-mute">
               You&apos;re copying {t.name}. Copy passes are blind: your account mirrors each trade, but the trades stay hidden.{" "}
-              <Link href="/me" className="text-frost">See your copy account</Link>
+              <Link href="/me" className="text-amber">See your copy account</Link>
             </p>
           ) : (
             <LockedLedger count={d.signedFills} latest={d.latestFill} />
@@ -109,7 +109,7 @@ export default function TraderPage() {
 
         {d.note ? (
           <section className="card p-5">
-            <h2 className="font-medium">Strategy note</h2>
+            <h2 className="font-bold tracking-[-0.015em]">Strategy note</h2>
             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-mute">{d.note.body}</p>
             <p className="label mt-3">
               Written by {d.note.model} on NEAR AI Cloud from trade statistics only, never positions · TEE attestation verified
@@ -121,7 +121,7 @@ export default function TraderPage() {
       </div>
 
       <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-        <h2 className="font-medium">Passes</h2>
+        <h2 className="font-bold tracking-[-0.015em]">Passes</h2>
         <PassPanel offers={t.offers} owner={d.access.owner} held={{ view: d.access.view && !d.access.owner, delayed: d.access.delayed, copy: d.access.copy }} onBought={load} />
         <p className="px-1 text-xs text-faint">Passes are minted by the Privue contract on NEAR testnet. Trades are paper fills at live NEAR Intents quotes.</p>
       </aside>

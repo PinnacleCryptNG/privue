@@ -41,7 +41,7 @@ export function SignInSheet() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-6" onClick={() => setSignInOpen(false)}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 sm:items-center sm:p-6" onClick={() => setSignInOpen(false)}>
       <div
         role="dialog"
         aria-modal="true"
@@ -51,21 +51,21 @@ export function SignInSheet() {
       >
         <div className="mb-5 flex items-center gap-3">
           <Mark size={32} />
-          <h2 id="signin-title" className="text-lg font-semibold">Sign in to Privue</h2>
+          <h2 id="signin-title" className="text-xl font-bold tracking-[-0.02em]">Step behind the blinds</h2>
         </div>
         <div className="space-y-3">
           <button className="btn btn-primary w-full" onClick={guest} disabled={!!busy}>
-            {busy === "guest" ? "Starting…" : "Try it now, no wallet"}
+            {busy === "guest" ? "Starting…" : "Continue as a guest"}
           </button>
           <p className="text-sm text-mute">
-            A private demo account. Privue pays for your first passes on NEAR testnet, so you can watch and copy traders
-            straight away.
+            No wallet, no funds. Privue covers your first passes on NEAR testnet, so you can watch and copy traders straight away. Sign in with
+            a wallet later and they move with you.
           </p>
           <div className="my-4 h-px bg-line" />
           <button className="btn btn-ghost w-full" onClick={wallet} disabled={!!busy}>
             {busy === "near" ? "Waiting for wallet…" : "Connect a NEAR testnet wallet"}
           </button>
-          <p className="text-sm text-mute">Sign a message with Meteor or Intear Wallet. Buy passes from your own testnet balance.</p>
+          <p className="text-sm text-mute">Sign one message with Meteor or Intear. Buy passes from your own testnet balance; 90% goes straight to the trader.</p>
           {error ? <p className="text-sm text-loss">{error}</p> : null}
         </div>
       </div>

@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Privacy" };
 export default function Privacy() {
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-5 py-12 leading-relaxed text-mute">
-      <h1 className="text-3xl font-semibold tracking-[-0.02em] text-text">Privacy</h1>
+      <h1 className="display text-4xl sm:text-5xl text-text">Privacy</h1>
       <p className="label">Testnet demonstration · last updated November 2026</p>
       <h2 className="font-semibold text-text">What we store</h2>
       <ul className="list-disc space-y-1 pl-5">

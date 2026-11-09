@@ -15,7 +15,7 @@ export default function MePage() {
   if (!me?.session)
     return (
       <div className="mx-auto max-w-md px-5 py-24 text-center">
-        <h1 className="text-2xl font-semibold">Your passes and trading desk</h1>
+        <h1 className="display text-4xl">Your desk</h1>
         <p className="mt-2 text-mute">Sign in to hold passes, copy traders blind, or open your own trader profile.</p>
         <button className="btn btn-primary mt-6" onClick={() => setSignInOpen(true)}>Sign in</button>
       </div>
@@ -41,7 +41,7 @@ export default function MePage() {
     <div className="mx-auto max-w-6xl space-y-12 px-5 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-[-0.02em]">{shortId(me.session.sub)}</h1>
+          <h1 className="display text-4xl sm:text-5xl">{shortId(me.session.sub)}</h1>
           <p className="mt-1 text-mute">{me.session.kind === "guest" ? "Demo account" : "NEAR testnet wallet"}</p>
         </div>
         <div className="flex gap-2">
@@ -51,13 +51,13 @@ export default function MePage() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Copying</h2>
+        <h2 className="text-xl font-bold tracking-[-0.02em]">Copying</h2>
         {me.copies.length ? (
           <div className="grid gap-3 md:grid-cols-2">
             {me.copies.map((c) => (
               <div key={c.handle} className="card p-5">
                 <div className="flex items-baseline justify-between">
-                  <Link href={`/t/${c.handle}`} className="font-semibold hover:text-frost">@{c.handle}</Link>
+                  <Link href={`/t/${c.handle}`} className="font-semibold hover:text-amber">@{c.handle}</Link>
                   <span className={`num text-lg font-semibold ${tone(c.stats.pnl)}`}>{pct(c.stats.pnlPct)}</span>
                 </div>
                 <p className="mt-1 text-sm text-mute">
@@ -69,17 +69,17 @@ export default function MePage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-mute">No copy passes yet. <Link className="text-frost" href="/traders">Pick a trader</Link> and get a copy pass to mirror them.</p>
+          <p className="text-sm text-mute">No copy passes yet. <Link className="text-amber" href="/traders">Pick a trader</Link> and get a copy pass to mirror them.</p>
         )}
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Watching</h2>
+        <h2 className="text-xl font-bold tracking-[-0.02em]">Watching</h2>
         {views.length ? (
           <ul className="card divide-y divide-line">
             {views.map((p) => (
               <li key={p.handle} className="flex items-center justify-between px-4 py-3 text-sm">
-                <Link href={`/t/${p.handle}`} className="font-medium hover:text-frost">
+                <Link href={`/t/${p.handle}`} className="font-medium hover:text-amber">
                   @{p.handle}
                   {p.tier === "delayed" ? <span className="ml-2 text-xs text-mute">24h delay</span> : null}
                 </Link>
@@ -94,8 +94,8 @@ export default function MePage() {
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-semibold">Your trading desk</h2>
-          {handle ? <Link href={`/t/${handle}`} className="text-sm text-frost">Public profile</Link> : null}
+          <h2 className="text-xl font-bold tracking-[-0.02em]">Your trading desk</h2>
+          {handle ? <Link href={`/t/${handle}`} className="text-sm text-amber">Public profile</Link> : null}
         </div>
         {handle ? (
           <div className="grid items-start gap-4 md:grid-cols-2">

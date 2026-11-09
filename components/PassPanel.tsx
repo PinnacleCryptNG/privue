@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { near } from "@/lib/format";
 import type { Offer } from "@/lib/near";
+import { IconCopy, IconDelayed, IconView } from "./Icons";
 import { useMe } from "./MeProvider";
 
 const COPY = {
-  view: { title: "View pass", body: "See every trade the moment it fills, with its signed quote." },
-  delayed: { title: "Delayed view pass", body: "The same trade feed, 24 hours late. Learn the strategy for a fraction of the live price." },
-  copy: { title: "Copy pass", body: "Your paper account mirrors each trade at your size. You never see the trades, so the signal can't leak." },
+  view: { Icon: IconView, title: "View pass", body: "See every trade the moment it fills, with its signed quote." },
+  delayed: { Icon: IconDelayed, title: "Delayed view", body: "The same trade feed, 24 hours late. Learn the strategy for a fraction of the live price." },
+  copy: { Icon: IconCopy, title: "Copy pass", body: "Your paper account mirrors each trade at your size. You never see the trades, so the signal can't leak." },
 };
 
 export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; owner: boolean; held: { view: boolean; delayed: boolean; copy: boolean }; onBought: () => void }) {
@@ -58,11 +59,15 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
         const o = offers.find((x) => x.tier === tier);
         if (!o) return null;
         const left = o.supply - o.sold;
+        const { Icon } = COPY[tier];
         return (
           <div key={tier} className="card p-4">
             <div className="flex items-baseline justify-between gap-3">
-              <h3 className="font-semibold">{COPY[tier].title}</h3>
-              <span className="num font-medium">{near(o.price)}</span>
+              <h3 className="flex items-center gap-2.5 font-bold tracking-[-0.015em]">
+                <Icon size={20} className="text-amber" />
+                {COPY[tier].title}
+              </h3>
+              <span className="num font-semibold">{near(o.price)}</span>
             </div>
             <p className="mt-1 text-sm text-mute">{COPY[tier].body}</p>
             <p className="label mt-2">
@@ -72,7 +77,7 @@ export function PassPanel({ offers, owner, held, onBought }: { offers: Offer[]; 
               {owner ? (
                 <p className="text-sm text-mute">This is your profile.</p>
               ) : held[tier] ? (
-                <p className="text-sm text-frost">You hold this pass.</p>
+                <p className="text-sm text-amber">You hold this pass.</p>
               ) : !me?.session ? (
                 <button className="btn btn-primary w-full" onClick={() => setSignInOpen(true)}>Sign in to get it</button>
               ) : left <= 0 ? (

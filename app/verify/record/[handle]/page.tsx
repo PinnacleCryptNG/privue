@@ -25,8 +25,8 @@ export default function RecordPage() {
   }, [handle]);
   return (
     <div className="mx-auto max-w-2xl px-5 py-12">
-      <h1 className="text-3xl font-semibold tracking-[-0.02em]">@{handle}&apos;s record</h1>
-      <p className="mt-2 text-mute">
+      <h1 className="display text-4xl sm:text-5xl">@{handle}&apos;s record</h1>
+      <p className="mt-4 leading-relaxed text-mute">
         Every fill is sealed and linked into a SHA-256 hash chain. Privue anchors the chain&apos;s head on the passes contract on NEAR testnet, and the
         contract only accepts a longer chain. If a fill were dropped or edited, every later hash would change and the checkpoints below would stop matching.
         You see hashes, not trades.
@@ -59,8 +59,8 @@ export default function RecordPage() {
           ) : null}
           <p className="mt-6 text-sm text-mute">
             Check it yourself: call <code className="text-text">commit_log</code> or <code className="text-text">get_commitment</code> on{" "}
-            <a className="text-frost" href="https://testnet.nearblocks.io/address/privue-app.testnet">privue-app.testnet</a>.{" "}
-            <Link className="text-frost" href={`/t/${handle}`}>Back to @{handle}</Link>
+            <a className="text-amber" href="https://testnet.nearblocks.io/address/privue-app.testnet">privue-app.testnet</a>.{" "}
+            <Link className="text-amber" href={`/t/${handle}`}>Back to @{handle}</Link>
           </p>
         </>
       ) : null}

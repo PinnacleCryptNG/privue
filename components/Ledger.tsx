@@ -1,32 +1,30 @@
 import Link from "next/link";
 import { usd } from "@/lib/format";
+import { Blinds } from "./Blinds";
 
 export type FeedFill = { id: number; side: "buy" | "sell"; symbol: string; qty: number; usdc: number; price: number; createdAt: string };
 
-const GHOST = ["NEAR", "ETH", "SOL", "BTC", "ZEC"];
-
-/** Locked view: one frosted row per real fill, carrying no trade data, only its proof link. */
+/** Locked view: the blinds stay down. One slat per real fill, carrying nothing but its number. */
 export function LockedLedger({ count, latest }: { count: number; latest: number | null }) {
-  const rows = Math.min(Math.max(count, 3), 7);
+  const slats = Math.min(Math.max(count, 4), 8);
   return (
-    <div className="relative overflow-hidden rounded-[14px] border border-line">
-      <div className="divide-y divide-line">
-        {Array.from({ length: rows }, (_, i) => (
-          <div key={i} className="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3 px-4 py-3 text-sm">
-            <span className="frosted text-gain">{i % 3 ? "BUY" : "SELL"}</span>
-            <span className="frosted">{GHOST[(i * 7 + count) % GHOST.length]} · 0.{(i * 3917) % 9000}</span>
-            <span className="frosted num">$1,{(i * 271) % 900}.00</span>
-          </div>
+    <div className="overflow-hidden rounded-[12px] border border-line">
+      <Blinds
+        count={slats}
+        slat={46}
+        rows={Array.from({ length: slats }, (_, i) => (
+          <span key={i} className="num text-xs text-faint">{i < count ? `sealed fill ${String(count - i).padStart(3, "0")}` : ""}</span>
         ))}
-      </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-ink/30 via-ink/70 to-ink/90 px-6 text-center">
-        <p className="font-medium">{count} private {count === 1 ? "fill" : "fills"}</p>
-        <p className="max-w-xs text-sm text-mute">Hidden until you hold a view pass. Every one carries a signed 1Click quote.</p>
-        {latest ? (
-          <Link href={`/verify/${latest}`} className="mt-1 text-sm text-frost hover:underline">
-            Check the latest fill&apos;s signature
-          </Link>
-        ) : null}
+        behind={
+          <div className="text-ink">
+            <p className="text-xl font-extrabold tracking-[-0.03em]">{count} private {count === 1 ? "fill" : "fills"}</p>
+            <p className="text-sm font-medium">Open with a view pass.</p>
+          </div>
+        }
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-panel px-4 py-3 text-sm">
+        <span className="text-mute">Hidden until you hold a view pass. Each fill carries a signed 1Click quote.</span>
+        {latest ? <Link href={`/verify/${latest}`} className="link font-medium">Check the latest signature</Link> : null}
       </div>
     </div>
   );
@@ -44,7 +42,7 @@ export function OpenLedger({ fills }: { fills: FeedFill[] }) {
             <span className="num text-mute"> · {f.qty.toPrecision(5)} @ {usd(f.price, f.price < 10 ? 4 : 2)}</span>
             <span className="block text-xs text-faint">
               {new Date(f.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} ·{" "}
-              <Link href={`/verify/${f.id}`} className="hover:text-frost">signed quote</Link>
+              <Link href={`/verify/${f.id}`} className="hover:text-amber">signed quote</Link>
             </span>
           </span>
           <span className="num">{usd(f.usdc)}</span>

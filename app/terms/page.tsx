@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Terms" };
 export default function Terms() {
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-5 py-12 leading-relaxed text-mute">
-      <h1 className="text-3xl font-semibold tracking-[-0.02em] text-text">Terms of use</h1>
+      <h1 className="display text-4xl sm:text-5xl text-text">Terms of use</h1>
       <p className="label">Testnet demonstration · last updated November 2026</p>
       <p>
         Privue is currently a demonstration running on NEAR testnet. By using it you accept these terms. If you don&apos;t, please don&apos;t use the

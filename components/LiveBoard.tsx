@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { PublicTrader } from "@/lib/public";
+import { useTraders } from "./landing/useTraders";
 import { TraderRow } from "./TraderRow";
 
 export function LiveBoard() {
-  const [list, setList] = useState<PublicTrader[] | null>(null);
-  useEffect(() => {
-    fetch("/api/traders")
-      .then((r) => r.json())
-      .then((d) => setList(d.traders ?? []))
-      .catch(() => setList([]));
-  }, []);
+  const list = useTraders();
   if (!list) return <div className="card h-40 animate-pulse" />;
-  return <div className="space-y-3">{list.slice(0, 4).map((t) => <TraderRow key={t.handle} t={t} />)}</div>;
+  return <div className="space-y-3">{list.slice(0, 4).map((t, i) => <TraderRow key={t.handle} t={t} rank={i + 1} />)}</div>;
 }

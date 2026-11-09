@@ -1,72 +1,113 @@
 import Link from "next/link";
-import { HeroLedger } from "@/components/HeroLedger";
+import { Blinds } from "@/components/Blinds";
+import { IconArrow, IconCopy, IconPayout, IconRecord } from "@/components/Icons";
+import { Earn } from "@/components/landing/Earn";
+import { HeroWindow } from "@/components/landing/HeroWindow";
+import { Proof } from "@/components/landing/Proof";
+import { Tape } from "@/components/landing/Tape";
+import { Tiers } from "@/components/landing/Tiers";
 import { LiveBoard } from "@/components/LiveBoard";
+import { RevealOnScroll } from "@/components/Reveal";
 import { TryButton } from "@/components/TryButton";
 
-const POINTS = [
-  { h: "Your record, signed", p: "Return, win rate and drawdown are computed from fills priced by live NEAR Intents quotes. 1Click signs every quote, and anyone can check the signature." },
-  { h: "Your trades, private", p: "Followers see the numbers, not the positions. Only the people you sell a pass to see the trades, and you set how many passes exist." },
-  { h: "Copy without leaking", p: "Copy passes mirror your trades into each holder's account without showing them. Your signal can't be screenshotted or front-run." },
+const TRADER_POINTS = [
+  { Icon: IconPayout, h: "90% of every pass", p: "The passes contract pays you at the moment of sale. Privue keeps 10%." },
+  { Icon: IconRecord, h: "You set the scarcity", p: "Pick the price and how many passes exist. Fewer holders, less crowding on your entries." },
+  { Icon: IconCopy, h: "Copiers can't leak you", p: "Copy holders mirror your trades without seeing them, so there is nothing to screenshot or front-run." },
 ];
 
 export default function Home() {
   return (
     <>
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-16 pt-14 md:grid-cols-[1.1fr_1fr] md:pt-24">
+      <RevealOnScroll />
+      <section className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-12 md:pt-20 lg:grid-cols-[1.08fr_1fr]">
         <div className="fade-up">
-          <h1 className="text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.035em] sm:text-[3.4rem]">
-            Sell the view.
+          <h1 className="display text-[3.4rem] sm:text-[4.6rem] lg:text-[5.4rem]">
+            Show the record.
             <br />
-            <span className="text-frost">Keep the trades.</span>
+            <span className="text-amber">Sell the view.</span>
           </h1>
-          <p className="mt-5 max-w-lg text-lg leading-relaxed text-mute">
-            Privue lets traders publish a verified track record while every trade stays private. Followers buy a limited pass to watch, or to copy
-            blind.
+          <p className="mt-7 max-w-[34rem] text-lg leading-relaxed text-mute">
+            Privue is copy trading with the blinds down. Traders publish a track record anchored on NEAR and keep every position private. Followers
+            buy a limited pass to watch the trades live, a day late, or copy them blind.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap items-center gap-3">
             <TryButton />
-            <Link href="/traders" className="btn btn-ghost">See the traders</Link>
+            <Link href="/traders" className="btn btn-ghost h-12 px-6">
+              Browse traders <IconArrow />
+            </Link>
+          </div>
+          <p className="label mt-5">Testnet passes, paper fills at live NEAR Intents prices. No wallet or funds needed.</p>
+        </div>
+        <div className="fade-up" style={{ animationDelay: "140ms" }}>
+          <HeroWindow />
+        </div>
+      </section>
+
+      <Tape />
+
+      <section className="mx-auto max-w-6xl px-5 pt-28">
+        <div className="max-w-2xl" data-reveal>
+          <h2 className="display text-4xl sm:text-5xl">Four ways to look at a trader.</h2>
+          <p className="mt-4 text-lg leading-relaxed text-mute">Everyone sees the record. What you see behind it depends on the pass you hold.</p>
+        </div>
+        <div className="mt-12">
+          <Tiers />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 pt-28">
+        <div className="mb-12 max-w-2xl" data-reveal>
+          <h2 className="display text-4xl sm:text-5xl">Don&apos;t take the record on trust.</h2>
+          <p className="mt-4 text-lg leading-relaxed text-mute">A private trader is only worth following if the public numbers are real. Each claim below links to its proof.</p>
+        </div>
+        <Proof />
+      </section>
+
+      <section id="earn" className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-28">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-center">
+          <div data-reveal>
+            <h2 className="display text-4xl sm:text-5xl">Get paid to be followed, not copied for free.</h2>
+            <ul className="mt-9 space-y-6">
+              {TRADER_POINTS.map((t) => (
+                <li key={t.h} className="flex gap-4">
+                  <t.Icon size={26} className="mt-0.5 shrink-0 text-amber" />
+                  <div>
+                    <h3 className="font-bold tracking-[-0.015em]">{t.h}</h3>
+                    <p className="mt-1 leading-relaxed text-mute">{t.p}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Link href="/me" className="btn btn-ghost mt-9 h-12 px-6">
+              Open a trader profile <IconArrow />
+            </Link>
+          </div>
+          <div data-reveal>
+            <Earn />
+            <p className="label mt-3 px-1">Illustration. During the demo, passes sell for NEAR testnet tokens.</p>
           </div>
         </div>
-        <div className="fade-up" style={{ animationDelay: "120ms" }}>
-          <HeroLedger />
-        </div>
       </section>
 
-      <section className="border-y border-line bg-panel/50">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-3">
-          {POINTS.map((p) => (
-            <div key={p.h}>
-              <h2 className="font-semibold">{p.h}</h2>
-              <p className="mt-2 leading-relaxed text-mute">{p.p}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <div className="mb-6 flex items-baseline justify-between gap-4">
-          <h2 className="text-2xl font-semibold tracking-[-0.02em]">Trading now</h2>
-          <Link href="/traders" className="text-sm text-frost">All traders</Link>
+      <section className="mx-auto max-w-6xl px-5 pt-28">
+        <div className="mb-8 flex items-end justify-between gap-4" data-reveal>
+          <h2 className="display text-4xl sm:text-5xl">On the desk now.</h2>
+          <Link href="/traders" className="link hidden shrink-0 text-sm font-medium sm:block">All traders</Link>
         </div>
         <LiveBoard />
       </section>
 
-      <section className="mx-auto max-w-6xl px-5">
-        <div className="card grid gap-8 p-6 sm:p-10 md:grid-cols-[1.2fr_1fr] md:items-center">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-[-0.02em]">Built on NEAR</h2>
-            <p className="mt-3 leading-relaxed text-mute">
-              Prices come from NEAR Intents 1Click, which settles confidentially. Passes are minted by a NEAR contract that pays the trader on
-              every sale. Strategy notes are written by NEAR AI Cloud models running in TEEs.
-            </p>
+      <section className="mx-auto max-w-6xl px-5 pt-28">
+        <div className="card relative overflow-hidden" data-reveal>
+          <Blinds count={7} slat={52} offsetMs={900} className="absolute inset-0 opacity-90" />
+          <div className="relative grid gap-6 bg-gradient-to-r from-ink via-ink/85 to-transparent p-8 sm:p-14">
+            <h2 className="display max-w-xl text-4xl sm:text-5xl">Pick a trader. Pull the cord.</h2>
+            <p className="max-w-md text-lg leading-relaxed text-mute">Start as a guest. Your first passes are on Privue, minted on NEAR testnet in a few seconds.</p>
+            <div>
+              <TryButton label="Start free" />
+            </div>
           </div>
-          <dl className="grid grid-cols-2 gap-5 text-sm">
-            <div><dt className="label">Pricing</dt><dd className="mt-1">NEAR Intents 1Click</dd></div>
-            <div><dt className="label">Passes</dt><dd className="mt-1">privue-app.testnet</dd></div>
-            <div><dt className="label">Notes</dt><dd className="mt-1">NEAR AI Cloud, TEE</dd></div>
-            <div><dt className="label">Trader share</dt><dd className="mt-1">90% of each pass</dd></div>
-          </dl>
         </div>
       </section>
     </>

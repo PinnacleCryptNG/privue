@@ -32,7 +32,7 @@ export function NoteButton({ handle }: { handle: string }) {
       <button className="btn btn-ghost w-full" disabled={busy} onClick={run}>{busy ? "Verifying the enclave and writing…" : "Write a note"}</button>
       {msg ? (
         <p className={`text-sm ${msg.bad ? "text-loss" : "text-mute"}`}>
-          {msg.text} {!msg.bad ? <Link className="text-frost" href={`/t/${handle}`}>See it on your profile</Link> : null}
+          {msg.text} {!msg.bad ? <Link className="text-amber" href={`/t/${handle}`}>See it on your profile</Link> : null}
         </p>
       ) : null}
     </div>

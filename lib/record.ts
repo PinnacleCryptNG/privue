@@ -41,6 +41,8 @@ export type RecordCheck = {
   unanchored: number;
   verdict: "verified" | "pending" | "mismatch" | "empty";
   leaves?: { checked: number; ok: boolean };
+  /** Newest links of the chain: sequence numbers and hashes only, never trade data. */
+  recent: { seq: number; hash: string }[];
 };
 
 /**
@@ -74,6 +76,7 @@ export async function checkRecord(handle: string, fills?: StoredFill[]): Promise
     checkpoints,
     unanchored: chain.length - (onchain?.count ?? 0),
     verdict: "empty",
+    recent: chain.slice(-12).reverse().map((r) => ({ seq: r.seq, hash: r.hash })),
   };
   if (fills) {
     let h = GENESIS;

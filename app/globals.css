@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #0c0e13;
-  --color-panel: #13161d;
-  --color-raise: #1a1e27;
-  --color-line: #262b37;
-  --color-text: #e8ebf1;
-  --color-mute: #8b92a4;
-  --color-faint: #5d6476;
-  --color-frost: #b8c4ff;
-  --color-frost-deep: #6f7fe0;
-  --color-gain: #5fd49c;
-  --color-loss: #f07b7b;
-  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
-  --radius-card: 14px;
+  --color-ink: #0e0d0b;
+  --color-panel: #171512;
+  --color-raise: #211e1a;
+  --color-line: #2f2b25;
+  --color-text: #f1ebdd;
+  --color-mute: #a69d8c;
+  --color-faint: #6f685c;
+  --color-amber: #f5b83d;
+  --color-amber-deep: #c98a12;
+  --color-gain: #8fd8a5;
+  --color-loss: #ff8270;
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 12px;
 }
 
 :root {
@@ -22,23 +22,36 @@
 
 html {
   background: var(--color-ink);
+  scroll-behavior: smooth;
 }
 
 body {
+  overflow-x: clip;
   background: var(--color-ink);
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-frost) 35%, transparent);
+  background: color-mix(in srgb, var(--color-amber) 40%, transparent);
+  color: var(--color-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 2px;
 }
 
 @layer components {
   .num {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
+    font-variant-numeric: lining-nums;
+  }
+  .display {
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
   }
   .card {
     background: var(--color-panel);
@@ -50,24 +63,28 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    height: 2.75rem;
-    padding: 0 1.15rem;
-    border-radius: 10px;
-    font-weight: 500;
+    height: 2.875rem;
+    padding: 0 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
     font-size: 0.95rem;
-    transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+    letter-spacing: -0.01em;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s, transform 0.15s;
     white-space: nowrap;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
   }
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
   .btn-primary {
-    background: var(--color-frost);
-    color: #0c0e13;
+    background: var(--color-amber);
+    color: var(--color-ink);
   }
   .btn-primary:hover:not(:disabled) {
-    background: #cdd5ff;
+    background: #ffc95c;
   }
   .btn-ghost {
     border: 1px solid var(--color-line);
@@ -79,9 +96,9 @@ body {
   }
   .field {
     width: 100%;
-    height: 2.75rem;
+    height: 2.875rem;
     padding: 0 0.85rem;
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--color-ink);
     border: 1px solid var(--color-line);
     color: var(--color-text);
@@ -89,7 +106,7 @@ body {
   }
   .field:focus {
     outline: none;
-    border-color: var(--color-frost-deep);
+    border-color: var(--color-amber-deep);
   }
   .label {
     font-size: 0.8rem;
@@ -100,25 +117,79 @@ body {
     user-select: none;
     pointer-events: none;
   }
+  .link {
+    color: var(--color-amber);
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration: underline;
+  }
+  /* Thin horizontal slats, the house texture. */
+  .slatlines {
+    background-image: repeating-linear-gradient(to bottom, transparent 0 7px, color-mix(in srgb, var(--color-line) 70%, transparent) 7px 8px);
+  }
 }
 
-@keyframes sweep {
-  0%, 12% { transform: translateY(-110%); }
-  55%, 100% { transform: translateY(560%); }
+/* Blinds: each slat tilts on its own axis, in a wave, and light comes through the gaps. */
+.blinds {
+  perspective: 900px;
+}
+.blinds .slat {
+  transform-origin: 50% 50%;
+  transform: rotateX(24deg);
+  animation: tilt var(--tilt-dur, 7s) cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: calc(var(--i) * 65ms + var(--tilt-offset, 0ms));
+  backface-visibility: hidden;
+}
+.blinds.is-open .slat,
+.blinds:hover .slat {
+  animation: none;
+  transform: rotateX(64deg);
+  transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+  transition-delay: calc(var(--i) * 30ms);
+}
+.blinds.is-still .slat {
+  animation: none;
+}
+@keyframes tilt {
+  0%, 52%, 100% { transform: rotateX(24deg); }
+  66%, 80% { transform: rotateX(58deg); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
 
 .fade-up {
-  animation: fade-up 0.5s ease both;
+  animation: fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+[data-reveal].is-in {
+  opacity: 1;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  .blinds .slat,
+  .marquee-track {
+    animation: none !important;
+  }
+  .fade-up {
+    animation: none;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
   }
 }
